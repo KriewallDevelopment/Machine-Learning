@@ -1,27 +1,3 @@
 # Machine-Learning
 
-Here is a test commit from Joel's Laptop
-
-                $$$$
-              $$    $$
-              $$    $$
-              $$    $$
-              $$    $$
-              $$    $$
-          $$$$$$    $$$$$$
-        $$    $$    $$    $$$$
-        $$    $$    $$    $$  $$
-$$$$$$  $$    $$    $$    $$    $$
-$$    $$$$                $$    $$
-$$      $$                      $$
-  $$    $$                      $$
-   $$$  $$                      $$
-    $$                          $$
-     $$$                        $$
-      $$                      $$$
-       $$$                    $$
-        $$                    $$
-         $$$                $$$
-          $$                $$
-          $$$$$$$$$$$$$$$$$$$$
-
+Suite of ML functions to attack a variety of problems.
