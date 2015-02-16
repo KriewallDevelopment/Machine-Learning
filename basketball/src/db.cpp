@@ -11,29 +11,28 @@ using std::endl;
 using std::ostringstream;
 using std::vector;
 
+static MYSQL* conn = NULL;
 
-MYSQL* openDB(void){
+static void openDB(void){
 
-	MYSQL* val = mysql_init(NULL);
+	conn = mysql_init(NULL);
 
-	if(!val){
+	if(!conn){
 		cout << "MySQL init failed" << endl;
 		exit(1);
 	}
 
-	val = mysql_real_connect(val,SERVER,USER,PASSWORD,DATABASE,0,NULL,0);
+	conn = mysql_real_connect(conn,SERVER,USER,PASSWORD,DATABASE,0,NULL,0);
 
-	if(!val){
+	if(!conn){
 		cout 	<< "Failed to connect to " << DATABASE 
 				<< " on " << SERVER << endl;
 
 		exit(1);
 	}
-
-	return val;
 }
 
-void closeDB(MYSQL* conn){
+void closeDB(){
 	mysql_close(conn);
 }
 
@@ -66,7 +65,10 @@ static Game parseGame(MYSQL_ROW r){
 	return g;
 }
 
-Game getGame(MYSQL* conn, int season, int team, int day){
+Game getGame(int season, int team, int day){
+
+	if(!conn)
+		openDB();
 
 	Game g;
 	ostringstream sstream;
@@ -77,16 +79,12 @@ Game getGame(MYSQL* conn, int season, int team, int day){
 
 	MYSQL_RES* 	result_set;
 	MYSQL_ROW 	row;
-	int rows;
 
 	mysql_query(conn, sstream.str().c_str());
 	result_set = mysql_store_result(conn);
-	rows = mysql_num_rows(result_set);
 
 	if((row = mysql_fetch_row(result_set)) != NULL){
 		g = parseGame(row);
-		cout << "game score: " << g.score << "-" << g.oscore 
-				<< " " << g.home << endl;
 	}
 	else{
 		cout << "Failed to fetch game" << endl;
@@ -96,7 +94,10 @@ Game getGame(MYSQL* conn, int season, int team, int day){
 	return g;
 }
 
-vector<Game> getGames(MYSQL* conn, int season, int team){
+vector<Game> getGames(int season, int team){
+
+	if(!conn)
+			openDB();
 
 	vector<Game> games;
 	ostringstream sstream;
@@ -107,18 +108,120 @@ vector<Game> getGames(MYSQL* conn, int season, int team){
 
 	MYSQL_RES* 	result_set;
 	MYSQL_ROW 	row;
-	int rows;
 
 	mysql_query(conn, sstream.str().c_str());
 	result_set = mysql_store_result(conn);
-	rows = mysql_num_rows(result_set);
 
 	while((row = mysql_fetch_row(result_set)) != NULL){
 		Game g = parseGame(row);
 		games.push_back(g);
-		cout << "game score: " << g.score << "-" << g.oscore 
-				<< " " << g.home << endl;
 	}
 
 	return games;
+}
+
+static Seed parseSeed(MYSQL_ROW r){
+
+	Seed s;
+	s.seed = 	atoi(r[0]);
+	s.region = 	r[1][0];
+	s.team = 	atoi(r[2]);
+	s.year = 	atoi(r[3]);
+	return s;
+}
+
+Seed getSeed(int team, int year){
+
+	if(!conn)
+			openDB();
+
+	Seed s;
+	ostringstream sstream;
+
+	sstream 	<< "SELECT * FROM SEEDS WHERE team = "
+				<< team << " AND year = " << year << ";";
+
+	MYSQL_RES* 	result_set;
+	MYSQL_ROW 	row;
+
+	mysql_query(conn, sstream.str().c_str());
+	result_set = mysql_store_result(conn);
+
+	if((row = mysql_fetch_row(result_set)) != NULL){
+		s = parseSeed(row);
+	}
+	else{
+		cout << "Failed to fetch seed" << endl;
+		exit(1);
+	}
+
+	return s;
+}
+
+vector<Seed> getSeeds(int year){
+
+	if(!conn)
+			openDB();
+
+	vector<Seed> seeds;
+	ostringstream sstream;
+
+	sstream 	<< "SELECT * FROM SEEDS WHERE year = "
+				<< year << " ORDER BY region, seed;";
+
+	MYSQL_RES* 	result_set;
+	MYSQL_ROW 	row;
+
+	mysql_query(conn, sstream.str().c_str());
+	result_set = mysql_store_result(conn);
+
+	while((row = mysql_fetch_row(result_set)) != NULL){
+		Seed s = parseSeed(row);
+		seeds.push_back(s);
+		cout << "Seed: " << s.seed << " - " << s.team
+						<< " " << s.region << endl;
+	}
+
+	return seeds;
+}
+
+static Result parseResult(MYSQL_ROW r){
+
+	Result res;
+	res.year = 		atoi(r[0]);
+	res.round = 	atoi(r[1]);
+	res.winner = 	atoi(r[2]);
+	res.wscore = 	atoi(r[3]);
+	res.loser = 	atoi(r[4]);
+	res.lscore = 	atoi(r[5]);
+	res.ot = 		atoi(r[6]);
+	res.region = 	r[7][0];
+	return res;
+}
+
+std::vector<Result> getResults(int year, int round){
+
+	if(!conn)
+				openDB();
+
+		vector<Result> results;
+		ostringstream sstream;
+
+		sstream 	<< "SELECT r.*, s.region FROM RESULTS r, SEEDS s "
+					<< "WHERE r.winner = s.team AND r.year = s.year "
+					<< "AND r.year = " << year << " AND round = " << round
+					<< " ORDER BY r.round, s.region;";
+
+		MYSQL_RES* 	result_set;
+		MYSQL_ROW 	row;
+
+		mysql_query(conn, sstream.str().c_str());
+		result_set = mysql_store_result(conn);
+
+		while((row = mysql_fetch_row(result_set)) != NULL){
+			Result r = parseResult(row);
+			results.push_back(r);
+		}
+
+		return results;
 }

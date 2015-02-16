@@ -1,16 +1,28 @@
 #include "genetic.h"
 #include "state.h"
+#include "bracket.h"
 #include "db.h"
+#include "dto.h"
 #include <mysql.h>
+#include <iostream>
 #include <vector>
+
+using std::cout;
+using std::endl;
+using std::vector;
 
 int main(){
 
-	MYSQL* conn = openDB();
+	Bracket b(2001);
 
-	std::vector<Game> games = getGames(conn, 2003, 1104);
+	vector<Projection> round1 = b.getRound(1);
 
-	closeDB(conn);
+	for(int i=0; i < round1.size(); i++){
+
+		cout << round1[i].team1 << endl;
+	}
+
+	closeDB();
 
 	return 0;
 }

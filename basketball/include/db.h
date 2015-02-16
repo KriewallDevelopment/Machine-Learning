@@ -6,12 +6,20 @@
 #include <vector>
 
 
-/* Connections */
 
-MYSQL* 	openDB(void);
-void	closeDB(MYSQL*);
+void closeDB();
 
-Game getGame(MYSQL*, int season, int team, int day);
-std::vector<Game> getGames(MYSQL*, int season, int team);
+/* Game data access */
+
+Game getGame(int season, int team, int day);
+std::vector<Game> getGames(int season, int team);
+
+
+/* Bracket data access */
+
+Seed getSeed(int team, int year);
+std::vector<Seed> getSeeds(int year);
+
+std::vector<Result> getResults(int year, int round);
 
 #endif

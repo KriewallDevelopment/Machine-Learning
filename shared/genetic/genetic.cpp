@@ -58,7 +58,7 @@ State GeneticSimulator::breed(State one, State two){
 }
 
 
-/* Is it ethical to call this function? */
+/* Is it even ethical to call this function? */
 
 void GeneticSimulator::genocide(){
 

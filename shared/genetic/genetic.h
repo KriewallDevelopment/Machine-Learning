@@ -15,7 +15,7 @@ public:
 		srand(time(0));
 	};
 
-	/* Finds and returs the most fit state across numberOfGenerations */
+	/* Finds and returns the most fit state across numberOfGenerations */
 
 	State search(int numberOfGenerations);
 

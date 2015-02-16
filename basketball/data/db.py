@@ -66,48 +66,29 @@ def disconnectFromDB(conn):
 	conn.close()
 
 
-conn = connectToDB()
-executeQuery(conn,"")
+#conn = connectToDB()
+#executeQuery(conn,"")
 
-f = open("regular_season_detailed_results.csv", 'r')
+f = open("tourney_slots.csv", 'r')
 cnt = 0;
 
 for line in f:
 	cnt = cnt + 1
-	print cnt
-	lst = line.split(",",34)
-	lst[33] = lst[33].strip()
+	#print cnt
+	lst = line.split(",",4)
+	lst[3] = lst[3].strip()
 
-	if(lst[6] == 'A'):
-		lst[6] = 'H'
-	elif(lst[6] == 'H'):
-		lst[6] = 'A'
+	if lst[1][1] == '5':
+		print lst[0] + " " + lst[1][2:]
 
-	query = "INSERT INTO GAMES (season, day, team, opp, score, oscore, \
-								home, ot, fgm, fga, fgm3, fga3, ftm, fta, \
-								orbd, drbd, ast, tovrs, stl, blk, pf) \
-			VALUES ("+	lst[0] 	+ "," + \
-						lst[1]	+ "," + \
-						lst[4]	+ "," + \
-						lst[2]	+ "," + \
-						lst[5]	+ "," + \
-						lst[3]	+ ",'" + \
-						lst[6]	+ "'," + \
-						lst[7]	+ "," + \
-						lst[21]	+ "," + \
-						lst[22]	+ "," + \
-						lst[23]	+ "," + \
-						lst[24]	+ "," + \
-						lst[25]	+ "," + \
-						lst[26]	+ "," + \
-						lst[27]	+ "," + \
-						lst[28]	+ "," + \
-						lst[29]	+ "," + \
-						lst[30]	+ "," + \
-						lst[31]	+ "," + \
-						lst[32]	+ "," + \
-						lst[33]	+ ");"
+	#query = "INSERT INTO GAMES (season, day, team, opp, score, oscore, \
+	#							home, ot, fgm, fga, fgm3, fga3, ftm, fta, \
+	#							orbd, drbd, ast, tovrs, stl, blk, pf) \
+	#		VALUES ("+	lst[0] 	+ "," + \
+	#					lst[1]	+ "," + \
+	#					lst[4]	+ "," + \
+	#					lst[2]	+ "," + \
 
-	executeQuery(conn,query)
+	#executeQuery(conn,query)
 
-conn.commit()
+#conn.commit()

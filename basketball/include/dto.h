@@ -99,7 +99,9 @@ typedef struct _result {
 	int loser;
 	int lscore;
 	int ot;
+	char region;
 
 } Result;
+
 
 #endif
