@@ -3,6 +3,7 @@
 #include <mysql.h>
 #include <iostream>
 #include <cstdlib>
+#include <string>
 #include <sstream>
 #include <vector>
 
@@ -10,6 +11,7 @@ using std::cout;
 using std::endl;
 using std::ostringstream;
 using std::vector;
+using std::string;
 
 static MYSQL* conn = NULL;
 
@@ -34,6 +36,35 @@ static void openDB(void){
 
 void closeDB(){
 	mysql_close(conn);
+}
+
+string getTeamName(int team){
+
+	if(!conn)
+			openDB();
+
+		string name;
+		ostringstream sstream;
+
+		sstream 	<< "SELECT name FROM TEAMS WHERE id = "
+					<< team << ";";
+
+		MYSQL_RES* 	result_set;
+		MYSQL_ROW 	row;
+
+		mysql_query(conn, sstream.str().c_str());
+		result_set = mysql_store_result(conn);
+
+		if((row = mysql_fetch_row(result_set)) != NULL){
+			string tmp(row[0]);
+			name = tmp;
+		}
+		else{
+			cout << "Failed to fetch team" << endl;
+			exit(1);
+		}
+
+		return name;
 }
 
 static Game parseGame(MYSQL_ROW r){

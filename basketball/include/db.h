@@ -4,10 +4,12 @@
 #include "dto.h"
 #include <mysql.h>
 #include <vector>
-
+#include <string>
 
 
 void closeDB();
+
+std::string getTeamName(int);
 
 /* Game data access */
 
