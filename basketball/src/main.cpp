@@ -43,6 +43,15 @@ int main(){
 			round1[i].prob = -1.0;
 	}
 
+	b.setRound(round1,1);
+	b.simulateRound(1);
+
+	vector<Projection> round2 = b.getRound(2);
+	cout << "ROUND 2" << endl;
+	for(int i=0; i<round2.size(); i++){
+		cout << getTeamName(round2[i].team1) << " / " << getTeamName(round2[i].team2) << endl;
+	}
+
 	double total = 0.0;
 	double correct = 0.0;
 
