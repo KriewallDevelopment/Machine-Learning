@@ -6,6 +6,7 @@
 #include <random>
 #include <ctime>
 #include "svm.h"
+#include "stdhdr.h"
 
 using std::istringstream;
 using std::vector;
@@ -15,12 +16,62 @@ using std::ios;
 using std::cout;
 using std::endl;
 
+const static int WIDTH = 640;
+const static int HEIGHT = 480;
+
+SVM svm;
+vector<Vector> trainingData;
+vector<Vector> testingData;
+vector<int> yvals;
+
 typedef struct record{
 
 	Vector v;
 	int score;
 
 } Record;
+
+static void drawPoints(){
+
+	const int HW = WIDTH / 2;
+	const int HH = HEIGHT / 2;
+
+	glBegin(GL_POINTS);
+
+	for(int i=0; i<trainingData.size(); i++){
+
+		if(yvals[i] == 1)
+			glColor3f(1.0,0.0,0.0);
+		else
+			glColor3f(0.0,0.0,1.0);
+
+		glVertex2i(trainingData[i][0] + HW,
+					trainingData[i][1] + HH);
+	}
+
+	glEnd();
+}
+
+static void draw(){
+
+	glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glColor3f(0.0f,0.0f,0.0f);
+    glPointSize(4.0);
+
+	svm.drawPlane(WIDTH,HEIGHT);
+	drawPoints();
+
+	glFlush();
+}
+
+static void onclick(unsigned char key, int x, int y){
+
+    switch(key){
+    case 27:
+        exit(0);
+    }
+}
 
 static Record parseLine(string line){
 
@@ -38,16 +89,12 @@ static Record parseLine(string line){
 	return r;
 }
 
-int main(){
+int main(int argc, char** argv){
 
 	srand(time(0));
 
-	SVM svm;
 	vector<string> records;
 
-	vector<Vector> trainingData;
-	vector<Vector> testingData;
-	vector<int> yvals;
 	vector<int> svals;
 	vector<int> output;
 
@@ -148,6 +195,19 @@ int main(){
 
 	cout << "There were " << actualHits << " actual positives in the testing dataset" << endl;
 	cout << "--------------------------------------------------" << endl;
+
+	glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB );
+    glutInitWindowSize(WIDTH,HEIGHT);
+    glutInitWindowPosition(100, 150);
+    glutCreateWindow("SVM");
+    glutDisplayFunc(draw);
+	glutKeyboardFunc(onclick);
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0,WIDTH*1.0, 0.0, HEIGHT*1.0);
+	glutMainLoop();
 
 	return 0;
 }

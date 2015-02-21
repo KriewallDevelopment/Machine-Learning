@@ -3,6 +3,7 @@ CFLAGS= -c -g -Wall -I include/ --std=c++0x -W -Wall -Wno-sign-compare -O2 -s -p
 
 SOURCES= $(shell find * -type f -name '*.cpp')
 OBJECTS= $(SOURCES:.cpp=.o)
+LIBS = -lGL -lglut -lGLU
 OUTPUT= analyzer
 
 all: $(SOURCES) $(OUTPUT)

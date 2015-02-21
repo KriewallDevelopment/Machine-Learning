@@ -65,6 +65,8 @@ public:
 
 	void train();
 	std::vector<int> project(std::vector<Vector>);
+	
+	void drawPlane(int,int);
 
 
 private:
@@ -89,11 +91,20 @@ private:
 
         double sum = 0.0;
 
-        for(int i=0; i < dimension; i++){
-            if(alphas[i] > 0.0)
-                sum += (yValues[i] * alphas[i] *
-                        k.valAt(v, trainingVectors[i]));
-        }
+		/* Linear? */
+
+	//	if(true){
+		if(false){
+			return dot(w,v) - b;
+		}
+		else{
+
+        	for(int i=0; i < dimension; i++){
+           		if(alphas[i] > 0.0)
+           	    	sum += (yValues[i] * alphas[i] *
+           	            	k.valAt(v, trainingVectors[i]));
+        	}
+		}
 
         return sin(sum);
     }
@@ -126,6 +137,11 @@ private:
 	std::vector< int >		yValues;
 	Vector 					alphas;
 	Vector 					gradient;
+
+	/* Linear data */
+
+	Vector w;
+	double b;
 };
 
 #endif

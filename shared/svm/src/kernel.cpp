@@ -28,8 +28,8 @@ double Kernel::kern(vector<double> one, vector<double> two){
 	//return dot(one,two);
 	return grbf(one,two);
 
-	//return cauchy(one,two) * klog(one, two);
-	//return cauchy(one,two) * grbf(one,two);
+	//return klog(one, two);
+	//return cauchy(one,two);
 	//return gamma* (0.3 * klog(one, two) + 0.1 * grbf(one, two) + 0.6 * cauchy(one,two)); //67 overall, 30ish 2s
 
 	//mult = 1.0;

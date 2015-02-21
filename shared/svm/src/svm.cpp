@@ -1,4 +1,5 @@
 #include "svm.h"
+#include "stdhdr.h"
 #include <vector>
 #include <cmath>
 #include <cfloat>
@@ -12,6 +13,63 @@ using std::endl;
 
 static double epsilon = 1e-8;
 static double tau = 1e-12;
+
+static double planeEpsilon = 1e-15;
+
+static void printVector(Vector v){
+
+	cout << "VECTOR DUMP: ";
+
+	for(int i=0; i<v.size(); i++)
+		cout << v[i] << " ";
+
+	cout << endl;
+}
+
+static Vector addVectors(Vector v1, Vector v2){
+
+	Vector ret;
+
+	for(int i=0; i<v1.size(); i++)
+		ret.push_back(v1[i] + v2[i]);
+
+	return ret;
+}
+
+static void scalarMult(Vector &v, double s){
+
+	for(int i=0; i < v.size(); i++)
+		v[i] *= s;
+}
+
+void SVM::drawPlane(int w, int h){
+
+	const int HW = w / 2;
+	const int HH = h / 2;
+
+	glBegin(GL_POINTS);
+
+	for(int i=0; i<w; i++){
+		for(int j=0; j<h; j++){
+			Vector v;
+			v.push_back(i - HW);
+			v.push_back(j - HH);
+
+			double score = objective(v);
+			
+			if(score < planeEpsilon && score > -planeEpsilon)
+				glColor3f(0.0,0.0,0.0);
+			else if(score < 0.0)
+				glColor3f(0.5,0.5,1.0);
+			else
+				glColor3f(1.0,0.5,0.5);
+			
+			glVertex2i(i,j);
+		}
+	}
+
+	glEnd();
+}
 
 void SVM::train(){
 
@@ -42,6 +100,7 @@ vector<int> SVM::project(vector<Vector> tests){
             result = 0;
 		}
 
+		cout << tests[i][0] << " " << tests[i][1] << " scored " << result << endl;
         out.push_back(result);
     }
 
@@ -121,7 +180,6 @@ void SVM::selectSet(int& one, int& two){
 	for(int i=0; i<yValues.size(); i++){
 
 		GET_BOUNDS(i,lb,ub);
-		//cout << "LOWER BOUND: " << lb << endl;
 
 		double y = yValues[i];
 		double a = alphas[i];
@@ -156,9 +214,9 @@ void SVM::executeSMO(){
 	fill(alphas.begin(), alphas.end(), 0.0);
 	fill(gradient.begin(), gradient.end(), 1.0);
 
-	C = 1;
-	C1 = 10.0;
-	C2 = 0.001;
+	C = 1.0;
+	C1 = 1.0;
+	C2 = 1.0;
 
 	int maxIterations = 100;
 	int count = 0;
@@ -180,7 +238,6 @@ void SVM::executeSMO(){
 		}
 
 		selectSet(idx1, idx2);
-		//cout << "select returned: " << idx1 << " " << idx2 << endl;
 
 		if (idx2 == -1 || idx1 == -1)
 			break;
@@ -213,8 +270,7 @@ void SVM::executeSMO(){
 				(k.valAt(v1,v1) + k.valAt(v2,v2) - 2 * k.valAt(v1,v2));
 
 		lambda = MIN(MIN(val1,val2), val3);
-		//cout << "lambda: " << lambda << endl;
-		
+
 		/* Update gradient vector */
 
 		for(int i=0; i<gradient.size(); i++){
@@ -231,7 +287,42 @@ void SVM::executeSMO(){
 		alphas[idx2] -= yValues[idx2] * lambda;
 	}
 
+	w.resize(2,0.0);
+
+	for(int i=0; i<alphas.size(); i++){
+		
+		Vector x = trainingVectors[i];
+		scalarMult(x, alphas[i] * yValues[i]);
+		w = addVectors(w,x);
+	}
+
 	cout << endl;
+	cout << "W: <" << w[0] << "," << w[1] << ">" << endl;
+	cout << "Support Vectors:" << endl;
+
+	int svs = 0;
+
+	for(int i=0;i<alphas.size(); i++){
+		if(alphas[i] != 0.0){
+			svs++;
+			cout << "\t";
+			printVector(trainingVectors[i]);
+		}
+	}
+
+	double sum = 0.0;
+
+	for(int i=0;i<alphas.size(); i++){
+		if(alphas[i] != 0.0){
+			sum += (dot(trainingVectors[i],w) - yValues[i]);
+		}
+	}
+
+	b = (1.0 / (1.0 * svs)) * sum;
+	cout << (1.0 / (1.0 * svs)) << endl;
+	cout << "b: " << b << endl;
+
+	cout << "Identified " << svs << " support vectors." << endl;
 	cout << "Analyzing results..." << endl;
 }
 
