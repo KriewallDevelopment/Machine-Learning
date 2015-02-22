@@ -14,7 +14,7 @@ using std::endl;
 static double epsilon = 1e-8;
 static double tau = 1e-12;
 
-static double planeEpsilon = 1e-15;
+static double planeEpsilon = 1e-4;
 
 static void printVector(Vector v){
 
@@ -100,7 +100,6 @@ vector<int> SVM::project(vector<Vector> tests){
             result = 0;
 		}
 
-		cout << tests[i][0] << " " << tests[i][1] << " scored " << result << endl;
         out.push_back(result);
     }
 
@@ -214,9 +213,10 @@ void SVM::executeSMO(){
 	fill(alphas.begin(), alphas.end(), 0.0);
 	fill(gradient.begin(), gradient.end(), 1.0);
 
-	C = 1.0;
-	C1 = 1.0;
-	C2 = 1.0;
+	C = 0.01;
+	C1 = C2 = C;
+	//C1 = 10.0;
+	//C2 = 0.001;
 
 	int maxIterations = 100;
 	int count = 0;
@@ -267,7 +267,7 @@ void SVM::executeSMO(){
 
 		val3 = 	(yValues[idx1]*gradient[idx1]	- 
 				 yValues[idx2]*gradient[idx2])	/
-				(k.valAt(v1,v1) + k.valAt(v2,v2) - 2 * k.valAt(v1,v2));
+				(k.eval(v1,v1) + k.eval(v2,v2) - 2 * k.eval(v1,v2));
 
 		lambda = MIN(MIN(val1,val2), val3);
 
@@ -276,9 +276,9 @@ void SVM::executeSMO(){
 		for(int i=0; i<gradient.size(); i++){
 			gradient[i] = gradient[i] - 
 						(lambda * yValues[i] * 
-						k.valAt(v1,trainingVectors[i]) + 
+						k.eval(v1,trainingVectors[i]) + 
 						(lambda * yValues[i] *
-						k.valAt(v2,trainingVectors[i])));
+						k.eval(v2,trainingVectors[i])));
 		}
 
 		/* Update alphas */

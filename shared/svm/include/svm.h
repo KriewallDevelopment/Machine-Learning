@@ -55,6 +55,10 @@ public:
 	SVM(){};
 	~SVM(){};
 
+	inline void setKernelType(int type){
+		k.setType(type);
+	}
+
 	inline void setTrainingData(std::vector< Vector > data, 
 								std::vector<int> yvals){
 
@@ -91,10 +95,7 @@ private:
 
         double sum = 0.0;
 
-		/* Linear? */
-
-	//	if(true){
-		if(false){
+		if(k.isLinear()){
 			return dot(w,v) - b;
 		}
 		else{
@@ -102,7 +103,7 @@ private:
         	for(int i=0; i < dimension; i++){
            		if(alphas[i] > 0.0)
            	    	sum += (yValues[i] * alphas[i] *
-           	            	k.valAt(v, trainingVectors[i]));
+           	            	k.eval(v, trainingVectors[i]));
         	}
 		}
 
@@ -110,14 +111,11 @@ private:
     }
 
 	inline double Q(int one, int two){
-		//cout << "Q access at: " << one << ", " << two << endl;
 		return yValues[one] * yValues[two] * 
-				k.valAt(trainingVectors[one],trainingVectors[two]);
-		//return access(one,two);
+				k.eval(trainingVectors[one],trainingVectors[two]);
 	}
 
 	inline double getC(int idx){
-		//return C;
 		return (yValues[idx] > 0) ? C1 : C2;
 	}
 

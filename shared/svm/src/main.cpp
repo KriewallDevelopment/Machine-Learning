@@ -15,6 +15,7 @@ using std::string;
 using std::ios;
 using std::cout;
 using std::endl;
+using std::atoi;
 
 const static int WIDTH = 640;
 const static int HEIGHT = 480;
@@ -92,6 +93,11 @@ static Record parseLine(string line){
 int main(int argc, char** argv){
 
 	srand(time(0));
+
+	if(argc < 2)
+		svm.setKernelType(0);
+	else
+		svm.setKernelType(atoi(argv[1]));
 
 	vector<string> records;
 

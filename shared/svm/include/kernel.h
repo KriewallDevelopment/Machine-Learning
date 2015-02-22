@@ -7,12 +7,22 @@
 
 class Kernel {
 
+typedef double (Kernel::*KERNEL_FUNCTION)(std::vector<double>,std::vector<double>);
+
 public:
 
 	Kernel(){};
 	~Kernel(){};
 
-	inline double valAt(std::vector<double> one, std::vector<double> two){
+	inline void setType(int t){
+		type = t;
+	}
+
+	inline bool isLinear(){
+		return type == 0;
+	}
+
+	inline double eval(std::vector<double> one, std::vector<double> two){
 		return kern(one,two);
 	}
 
@@ -22,9 +32,12 @@ public:
 
 private:
 
-	double cauchy(std::vector<double>, std::vector<double>);
+	int type;
+	
 	double kern(std::vector<double>, std::vector<double>);
+	double cauchy(std::vector<double>, std::vector<double>);
 	double wave(std::vector<double>, std::vector<double>);
+	double linear(std::vector<double>,std::vector<double>);
 	double klog(std::vector<double>, std::vector<double>);
 	double grbf(std::vector<double>, std::vector<double>);
 	double gamma;
