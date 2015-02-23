@@ -213,7 +213,7 @@ void SVM::executeSMO(){
 	fill(alphas.begin(), alphas.end(), 0.0);
 	fill(gradient.begin(), gradient.end(), 1.0);
 
-	C = 0.01;
+	C = 1.0;
 	C1 = C2 = C;
 	//C1 = 10.0;
 	//C2 = 0.001;
@@ -297,29 +297,34 @@ void SVM::executeSMO(){
 	}
 
 	cout << endl;
-	cout << "W: <" << w[0] << "," << w[1] << ">" << endl;
-	cout << "Support Vectors:" << endl;
+
+	if(k.isLinear())
+		cout << "W: <" << w[0] << "," << w[1] << ">" << endl;
+	else
+		cout << "W has infinite dimensions" << endl;
+
+
+	/* How many support vectors do we have? */	
 
 	int svs = 0;
 
-	for(int i=0;i<alphas.size(); i++){
-		if(alphas[i] != 0.0){
+	for(int i=0;i<alphas.size(); i++)
+		if(alphas[i] != 0.0)
 			svs++;
-			cout << "\t";
-			printVector(trainingVectors[i]);
-		}
-	}
+
+	/* Compute b */
 
 	double sum = 0.0;
 
 	for(int i=0;i<alphas.size(); i++){
+
 		if(alphas[i] != 0.0){
-			sum += (dot(trainingVectors[i],w) - yValues[i]);
+			//sum += (dot(trainingVectors[i],w) - yValues[i]);
+			sum += (infDP(trainingVectors[i]) - yValues[i]);
 		}
 	}
 
 	b = (1.0 / (1.0 * svs)) * sum;
-	cout << (1.0 / (1.0 * svs)) << endl;
 	cout << "b: " << b << endl;
 
 	cout << "Identified " << svs << " support vectors." << endl;

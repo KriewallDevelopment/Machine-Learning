@@ -91,6 +91,18 @@ private:
 		}
 	}
 
+	inline double infDP(Vector v){
+
+		double sum = 0.0;
+
+		for(int i=0; i < dimension; i++){
+				sum += (yValues[i] * alphas[i] *
+						k.eval(v, trainingVectors[i]));
+		}
+
+		return sum;
+	}
+
 	inline double objective(Vector v){
 
         double sum = 0.0;
@@ -99,15 +111,11 @@ private:
 			return dot(w,v) - b;
 		}
 		else{
-
-        	for(int i=0; i < dimension; i++){
-           		if(alphas[i] > 0.0)
-           	    	sum += (yValues[i] * alphas[i] *
-           	            	k.eval(v, trainingVectors[i]));
-        	}
+			sum = infDP(v);
 		}
 
-        return sin(sum);
+        //return sin(sum);
+		return sum - b;
     }
 
 	inline double Q(int one, int two){

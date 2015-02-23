@@ -30,7 +30,8 @@ double Kernel::kern(vector<double> one, vector<double> two){
 		return linear(one,two);
 
 	case 1:
-		return pow(gamma * dot(one,two) + 0.0, 2.0);
+		//return pow(gamma * dot(one,two) + 1.0, 3.0);
+		return pow(gamma * dot(one,two) + 0.0, 3.0);
 
 	case 2:
 		return grbf(one,two);
