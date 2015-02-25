@@ -12,8 +12,6 @@ using std::endl;
 using std::vector;
 
 typedef vector<double>	Vector;
-
-
 inline double dot(Vector v1, Vector v2){
 
 	const int max = v1.size();

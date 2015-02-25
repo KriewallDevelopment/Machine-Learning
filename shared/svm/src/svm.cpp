@@ -75,7 +75,7 @@ void SVM::train(){
 
 	/* Scale the data for faster computation */
 
-	scale(-1,1);
+	//scale(-1,1);
 	k.initGamma(trainingVectors[0].size());
 	executeSMO();
 }
@@ -213,12 +213,12 @@ void SVM::executeSMO(){
 	fill(alphas.begin(), alphas.end(), 0.0);
 	fill(gradient.begin(), gradient.end(), 1.0);
 
-	C = 1.0;
+	C = 0.5;
 	C1 = C2 = C;
 	//C1 = 10.0;
 	//C2 = 0.001;
 
-	int maxIterations = 100;
+	int maxIterations = 10000;
 	int count = 0;
 
 	cout << "Building Model..." << endl;
@@ -319,8 +319,11 @@ void SVM::executeSMO(){
 	for(int i=0;i<alphas.size(); i++){
 
 		if(alphas[i] != 0.0){
-			//sum += (dot(trainingVectors[i],w) - yValues[i]);
-			sum += (infDP(trainingVectors[i]) - yValues[i]);
+		
+			if(k.isLinear())
+				sum += (dot(trainingVectors[i],w) - yValues[i]);
+			else
+				sum += (infDP(trainingVectors[i]) - yValues[i]);
 		}
 	}
 
