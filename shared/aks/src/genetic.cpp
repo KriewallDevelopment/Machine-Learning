@@ -1,14 +1,24 @@
 #include "genetic.h"
 #include "state.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 State GeneticSimulator::search(int numberOfGenerations){
-	
-	int currentGeneration = 0;
 
-	/* Set up initial population here and arbitrarily set bestFound */
+	int currentGeneration = 0;
+	const int populationSize = currentPopulation.size();
+
+	/* arbitrarily set bestFound */
+
+	if(populationSize < 2)
+		return bestFound;
+
+	bestFound = currentPopulation[0];
 
 	while(currentGeneration < numberOfGenerations){
+
+		printf("Generation %i\n",currentGeneration);
+		fflush(stdout);
 
 		/* Do we have a new best score? */
 
@@ -56,7 +66,9 @@ State GeneticSimulator::breed(State one, State two){
 	/* 
 	 * Combine these two states in some form
 	 * Maybe use more of the state that is more fit?
-	 */	
+	 */
+
+	return one;	
 }
 
 

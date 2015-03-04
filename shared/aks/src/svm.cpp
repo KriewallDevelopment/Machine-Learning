@@ -8,10 +8,17 @@
 #include <limits.h>
 #include <locale.h>
 #include "svm.h"
+#include "state.h"
 #include <iostream>
 
 using std::cout;
 using std::endl;
+
+/* OUR NEW IMPROVED KERNEL */
+
+extern KERNEL_FUNCTION aks_kernel;
+
+
 
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
@@ -233,6 +240,11 @@ private:
 	const double coef0;
 
 	static double dot(const svm_node *px, const svm_node *py);
+
+	double kernel_aks(int i, int j) const
+	{
+		return aks_kernel(x[i],x[j]);
+	}
 	double kernel_linear(int i, int j) const
 	{
 		return dot(x[i],x[j]);
@@ -278,6 +290,8 @@ Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
 			break;
 	}
 
+	kernel_function = &Kernel::kernel_aks;
+
 	clone(x,x_,l);
 
 	if(kernel_type == RBF)
@@ -321,6 +335,9 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
 double Kernel::k_function(const svm_node *x, const svm_node *y,
 			  const svm_parameter& param)
 {
+
+	return aks_kernel(x,y);
+
 
 	switch(param.kernel_type)
 	{

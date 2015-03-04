@@ -5,8 +5,13 @@
 #include <errno.h>
 #include <math.h>
 #include "svm.h"
+#include "state.h"
 #include "stdhdr.h"
+#include "genetic.h"
+
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
+
+KERNEL_FUNCTION aks_kernel;
 
 struct svm_parameter param;		// set by parse_command_line
 struct svm_problem prob;		// set by read_problem
@@ -15,16 +20,46 @@ struct svm_node *x_space;
 int cross_validation;
 int nr_fold;
 
-//double WIDTH = 640.0;
-//double HEIGHT = 480.0;
 double WIDTH = 500.0;
 double HEIGHT = 500.0;
 
-const int size = 1134;
+int size = 1134;
 int total_elements = 0;
 
-/*
-static double dot(const svm_node *px, const svm_node *py){
+double kern(const svm_node*, const svm_node*);
+double dot(const svm_node*, const svm_node*);
+
+double poly(const svm_node* px, const svm_node* py){
+	return pow(0.5*dot(px,py)+1.0,3.0);	
+}
+
+double test(const svm_node* px, const svm_node* py){
+	return kern(px,py) + poly(px,py);
+}
+
+void perform_aks(){
+
+	GeneticSimulator sim;
+
+	State s1(&dot);
+	State s2(&poly);
+	State s3(&kern);
+	State s4(&test);
+	State best;
+
+	sim.addToPopulation(s1);
+	sim.addToPopulation(s2);
+	sim.addToPopulation(s3);
+	sim.addToPopulation(s4);
+
+	best = sim.search(10);
+	aks_kernel = best.getKernel();
+
+	printf("Genetic search found ");
+	printf("best kernel with score of %f\n", best.fitness());
+}
+
+double dot(const svm_node *px, const svm_node *py){
 
     double sum = 0;
     while(px->index != -1 && py->index != -1)
@@ -46,104 +81,16 @@ static double dot(const svm_node *px, const svm_node *py){
     return sum;
 }
 
-static double kern(struct svm_node* px, struct svm_node* py){
+double kern(const struct svm_node* px, const struct svm_node* py){
 
 	//return dot(px,py);
 	//return pow(0.5*dot(px,py)+1.0,3.0);
 	return exp(-0.5 * (dot(px,px)+dot(py,py) - 2*dot(px,py)));
 }
-*/
-
-static double fitness(){
-
-	int i = 0;
-	int j = 0;
-	int pcnt = 0;
-	double sum1 = 0.0;
-	double sum2 = 0.0;
-
-	svm_node** vitr = prob.x;
-	double* yitr = prob.y;
-	svm_node* xi;
-	svm_node* xj;
-
-	while(i < size){
-
-		xi = vitr[i];
-		double dist = 0.0;
-		double close = 0.0;
-
-		/* For each vector marked +1 */
-
-        if(((int)yitr[i]) == 1){
-
-			j = i + 1;
-			int phits = 0;
-			int nhits = 0;
-
-			/* Perform pairwise comparison */
-
-			while(j < size){
-
-				xj = vitr[j];
-
-				if(((int)yitr[j]) != 1){
-
-					/* Compute distance from vector marked -1 */
-		
-					dist += kern(xi,xj);
-					nhits++;
-				}
-				else{
-
-					/* Compute distance from vector marked +1 */
-
-					close += kern(xi,xj);
-					phits++;
-				}
-
-				j++;
-			}
-
-			//printf("phits: %i\n",phits);
-			//printf("nhits: %i\n",nhits);
-			//printf("dist: %f\n", dist);
-			//printf("clost: %f\n", close);
-			//printf("d avg: %f\n",dist / (1.0 * nhits));
-			//printf("c avg: %f\n",close / (1.0 * phits));
-
-			if(nhits > 0)
-				dist /= (1.0 * nhits);
-			
-			if(phits > 0)
-				close /= (1.0 * phits);
-
-			pcnt++;
-		}
-
-		sum1 += dist;
-		sum2 += close;
-		i++;
-   	}
-
-	sum1 /= (1.0 * pcnt);
-	sum2 /= (1.0 * (size - pcnt));
-
-	printf("Average distance from negatives: %f\n",sum1);
-	printf("Average distance from positives: %f\n",sum2);
-
-	
-	return sum1;
-}
-
-static double fit(){
-
-}
 
 static void drawPoints(){
 
 	int counter = 0;
-	int correct = 0;
 
 	svm_node** vitr = prob.x;
 	double* yitr = prob.y;
@@ -160,22 +107,11 @@ static void drawPoints(){
         else
             glColor3f(0.0,0.0,1.0);
 	
-		double d = svm_predict(model, px);
-
-		if(((int)yitr[counter]) == 1 && ((int)d) == 1)
-			correct++;
-		else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
-			correct++;
-	    
-
    	    glVertex2d(px[0].value * WIDTH, px[1].value * HEIGHT);
 		counter++;
    	}
 
    	glEnd();
-
-	printf("Scored %f%% on training data\n",100.0*(1.0*correct)/(1.0*counter));
-	printf("Fitness of kernel: %f\n",fitness());
 }
 
 static void drawClass(){
@@ -324,14 +260,16 @@ int main(int argc, char **argv)
     glLoadIdentity();
     gluOrtho2D(0.0,WIDTH*1.0, 0.0, HEIGHT*1.0);
 
+	perform_aks();
+
 	if(cross_validation)
 	{
 		do_cross_validation();
 	}
 	else
 	{
+	
 		model = svm_train(&prob,&param);
-
 		glutMainLoop();
 
 		if(svm_save_model(model_file_name,model))
@@ -411,6 +349,10 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	param.weight_label = NULL;
 	param.weight = NULL;
 	cross_validation = 0;
+
+	// FORCE QUITE MODE
+
+	print_func = &print_null;
 
 	// parse options
 	for(i=1;i<argc;i++)

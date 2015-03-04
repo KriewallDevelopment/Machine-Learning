@@ -49,6 +49,8 @@ void SVM::drawPlane(int w, int h){
 
 	glBegin(GL_POINTS);
 
+	/*
+
 	for(int i=0; i<w; i++){
 		for(int j=0; j<h; j++){
 			Vector v;
@@ -64,6 +66,24 @@ void SVM::drawPlane(int w, int h){
 			else
 				glColor3f(1.0,0.5,0.5);
 			
+			glVertex2i(i,j);
+		}
+	}
+	*/
+
+	for(int i=0; i < w; i++){
+		for(int j=0; j<h; j++){
+
+			Vector v;
+			v.push_back((1.0 * i) / w);
+			v.push_back((1.0 * j) / h);
+			double score = objective(v);
+
+			if(score > 0.0)
+				glColor3f(1.0,0.5,0.5);
+			else
+				glColor3f(0.5,0.5,1.0);
+
 			glVertex2i(i,j);
 		}
 	}
@@ -87,6 +107,8 @@ vector<int> SVM::project(vector<Vector> tests){
 	for(int i=0; i<tests.size(); i++){
 
         double score = objective(tests[i]);
+
+		cout << tests[i][0] << " " << tests[i][1] << " scored " << score << endl;
 
         int result;
 

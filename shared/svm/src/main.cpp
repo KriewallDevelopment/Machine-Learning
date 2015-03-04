@@ -17,8 +17,8 @@ using std::cout;
 using std::endl;
 using std::atoi;
 
-const static int WIDTH = 640;
-const static int HEIGHT = 480;
+const static double WIDTH = 640.0;
+const static double HEIGHT = 480.0;
 
 SVM svm;
 vector<Vector> trainingData;
@@ -34,9 +34,6 @@ typedef struct record{
 
 static void drawPoints(){
 
-	const int HW = WIDTH / 2;
-	const int HH = HEIGHT / 2;
-
 	glBegin(GL_POINTS);
 
 	for(int i=0; i<trainingData.size(); i++){
@@ -46,8 +43,8 @@ static void drawPoints(){
 		else
 			glColor3f(0.0,0.0,1.0);
 
-		glVertex2i(trainingData[i][0] + HW,
-					trainingData[i][1] + HH);
+		glVertex2d(trainingData[i][0] * WIDTH,
+					trainingData[i][1] * HEIGHT);
 	}
 
 	glEnd();
@@ -129,7 +126,8 @@ int main(int argc, char** argv){
 
 	stream.close();
 
-	int third = records.size() / 3;
+	//int third = records.size() / 3;
+	int third = 1;
 
 	for(int i=0; i<third; i++){
 		Record rec = parseLine(records.back());
