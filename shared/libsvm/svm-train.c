@@ -56,88 +56,32 @@ static double kern(struct svm_node* px, struct svm_node* py){
 
 static double fitness(){
 
-	int i = 0;
-	int j = 0;
-	int pcnt = 0;
-	double sum1 = 0.0;
-	double sum2 = 0.0;
+	double score = 0.0;
 
-	svm_node** vitr = prob.x;
-	double* yitr = prob.y;
-	svm_node* xi;
-	svm_node* xj;
+    int counter = 0;
+    int correct = 0;
 
-	while(i < size){
+    svm_node** vitr = prob.x;
+    double* yitr = prob.y;
+    svm_node* px;
 
-		xi = vitr[i];
-		double dist = 0.0;
-		double close = 0.0;
+    while(counter < prob.l){
 
-		/* For each vector marked +1 */
+        px = vitr[counter];
 
-        if(((int)yitr[i]) == 1){
+        double d = svm_predict(model, px);
 
-			j = i + 1;
-			int phits = 0;
-			int nhits = 0;
+        if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+            correct++;
+        else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+            correct++;
 
-			/* Perform pairwise comparison */
+        counter++;
+    }
 
-			while(j < size){
-
-				xj = vitr[j];
-
-				if(((int)yitr[j]) != 1){
-
-					/* Compute distance from vector marked -1 */
-		
-					dist += kern(xi,xj);
-					nhits++;
-				}
-				else{
-
-					/* Compute distance from vector marked +1 */
-
-					close += kern(xi,xj);
-					phits++;
-				}
-
-				j++;
-			}
-
-			//printf("phits: %i\n",phits);
-			//printf("nhits: %i\n",nhits);
-			//printf("dist: %f\n", dist);
-			//printf("clost: %f\n", close);
-			//printf("d avg: %f\n",dist / (1.0 * nhits));
-			//printf("c avg: %f\n",close / (1.0 * phits));
-
-			if(nhits > 0)
-				dist /= (1.0 * nhits);
-			
-			if(phits > 0)
-				close /= (1.0 * phits);
-
-			pcnt++;
-		}
-
-		sum1 += dist;
-		sum2 += close;
-		i++;
-   	}
-
-	sum1 /= (1.0 * pcnt);
-	sum2 /= (1.0 * (size - pcnt));
-
-	printf("Average distance from negatives: %f\n",sum1);
-	printf("Average distance from positives: %f\n",sum2);
-
+    score = (1.0 * correct)/(1.0 * counter);
 	
-	return sum1;
-}
-
-static double fit(){
-
+	return score;
 }
 
 static void drawPoints(){
@@ -175,7 +119,6 @@ static void drawPoints(){
    	glEnd();
 
 	printf("Scored %f%% on training data\n",100.0*(1.0*correct)/(1.0*counter));
-	printf("Fitness of kernel: %f\n",fitness());
 }
 
 static void drawClass(){
@@ -331,6 +274,7 @@ int main(int argc, char **argv)
 	else
 	{
 		model = svm_train(&prob,&param);
+		fitness();
 
 		glutMainLoop();
 

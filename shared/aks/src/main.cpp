@@ -4,14 +4,19 @@
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
+#include <vector>
 #include "svm.h"
 #include "state.h"
 #include "stdhdr.h"
+#include "kernel.h"
 #include "genetic.h"
+
+using std::vector;
 
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 KERNEL_FUNCTION aks_kernel;
+GKernel aks_kernel_obj;
 
 struct svm_parameter param;		// set by parse_command_line
 struct svm_problem prob;		// set by read_problem
@@ -26,66 +31,86 @@ double HEIGHT = 500.0;
 int size = 1134;
 int total_elements = 0;
 
-double kern(const svm_node*, const svm_node*);
-double dot(const svm_node*, const svm_node*);
-
-double poly(const svm_node* px, const svm_node* py){
-	return pow(0.5*dot(px,py)+1.0,3.0);	
-}
-
-double test(const svm_node* px, const svm_node* py){
-	return kern(px,py) + poly(px,py);
+double run_aks(const svm_node* px, const svm_node* py){
+	return aks_kernel_obj.eval(px,py);
 }
 
 void perform_aks(){
 
+	aks_kernel = run_aks;
 	GeneticSimulator sim;
 
-	State s1(&dot);
-	State s2(&poly);
-	State s3(&kern);
-	State s4(&test);
+	vector<double> alphas;
+	alphas.push_back(0.0);
+	alphas.push_back(21.75);
+	alphas.push_back(5166676.984727);
+	alphas.push_back(0.0);
+
+	GKernel test;
+
+	test.alphas = alphas;
+	State s1(test);
+
+	test.alphas[0]= 0.0;
+	test.alphas[1] = 247.406;
+	test.alphas[2] = 15500030.954181;
+	test.alphas[3] = 0.0;
+	State s2(test);
+
+	test.alphas[0] = 0.0;
+	test.alphas[1] = 0.0;
+	test.alphas[2] = 1.0;
+	test.alphas[3] = 0.0;
+	State s3(test);
+
+	test.alphas[2] = 0.0;
+	test.alphas[3] = 1.0;
+	State s4(test);
+
+	test.alphas[0] = 0.0;
+	test.alphas[1] = 0.0;
+	test.alphas[2] = 1.0;
+	test.alphas[3] = 1.0;
+	State s5(test);
+
+	test.alphas[0] = 0.0;
+	test.alphas[1] = 1.0;
+	test.alphas[2] = 1.0;
+	test.alphas[3] = 0.0;
+	State s6(test);
+
+	test.alphas[0] = 1.0;
+	test.alphas[1] = 1.0;
+	test.alphas[2] = 0.0;
+	test.alphas[3] = 0.0;
+	State s7(test);
+
+	test.alphas[0] = 1.0;
+	test.alphas[1] = 1.0;
+	test.alphas[2] = 1.0;
+	test.alphas[3] = 1.0;
+	State s8(test);
+
 	State best;
 
 	sim.addToPopulation(s1);
 	sim.addToPopulation(s2);
 	sim.addToPopulation(s3);
 	sim.addToPopulation(s4);
+	sim.addToPopulation(s5);
+	sim.addToPopulation(s6);
+	sim.addToPopulation(s7);
+	sim.addToPopulation(s8);
 
-	best = sim.search(10);
-	aks_kernel = best.getKernel();
+	best = sim.search(25);
+	aks_kernel_obj = best.getKernel();
 
 	printf("Genetic search found ");
 	printf("best kernel with score of %f\n", best.fitness());
-}
-
-double dot(const svm_node *px, const svm_node *py){
-
-    double sum = 0;
-    while(px->index != -1 && py->index != -1)
-    {
-        if(px->index == py->index)
-        {
-            sum += px->value * py->value;
-            ++px;
-            ++py;
-        }
-        else
-        {
-            if(px->index > py->index)
-                ++py;
-            else
-                ++px;
-        }
-    }
-    return sum;
-}
-
-double kern(const struct svm_node* px, const struct svm_node* py){
-
-	//return dot(px,py);
-	//return pow(0.5*dot(px,py)+1.0,3.0);
-	return exp(-0.5 * (dot(px,px)+dot(py,py) - 2*dot(px,py)));
+	printf("alphas: %f, %f, %f, %f\n",aks_kernel_obj.alphas[0],
+										aks_kernel_obj.alphas[1],
+										aks_kernel_obj.alphas[2],
+										aks_kernel_obj.alphas[3]);
 }
 
 static void drawPoints(){

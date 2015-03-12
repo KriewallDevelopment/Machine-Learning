@@ -43,6 +43,37 @@ static inline double powi(double base, int times)
 #define TAU 1e-12
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
+static double fitness(struct svm_problem prob, struct svm_model* model){
+
+    double score = 0.0;
+
+    int counter = 0;
+    int correct = 0;
+
+    svm_node** vitr = prob.x;
+    double* yitr = prob.y;
+    svm_node* px;
+
+    while(counter < prob.l){
+
+        px = vitr[counter];
+
+        double d = svm_predict(model, px);
+
+        if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+            correct++;
+        else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+            correct++;
+
+        counter++;
+    }
+
+    score = (1.0 * correct)/(1.0 * counter);
+
+    return score;
+}
+
+
 static void print_string_stdout(const char *s)
 {
 	fputs(s,stdout);
@@ -2338,6 +2369,9 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		free(nz_count);
 		free(nz_start);
 	}
+
+	info("FITNESS: %f\n",fitness(*prob, model));
+
 	return model;
 }
 

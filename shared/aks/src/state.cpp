@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <vector>
 #include "state.h"
 #include "svm.h"
 
+using std::vector;
+
 extern struct svm_problem 	prob;
 extern struct svm_parameter param;
-extern KERNEL_FUNCTION aks_kernel;
+extern GKernel aks_kernel_obj;
 extern int size;
 
 State::State(){
@@ -13,11 +16,11 @@ State::State(){
 	fitnessScore = -1.0;
 }
 
-State::State(KERNEL_FUNCTION f){
+State::State(GKernel k){
 
 	scoreIsCached = false;
 	fitnessScore = -1.0;
-	kernel = f;
+	kernel = k;
 }
 
 double State::fitness(){
@@ -25,7 +28,7 @@ double State::fitness(){
 	if(scoreIsCached)
 		return fitnessScore;
 
-	aks_kernel = kernel;
+	aks_kernel_obj = kernel;
 	model = svm_train(&prob, &param);
 
 	/* Score this state! */

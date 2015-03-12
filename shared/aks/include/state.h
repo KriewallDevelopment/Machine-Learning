@@ -2,30 +2,30 @@
 #define STATE_H
 
 #include "svm.h"
+#include "kernel.h"
 
 typedef double (*KERNEL_FUNCTION)(const svm_node*, const svm_node*);
-
 
 class State {
 
 public:
 
 	State();
-	State(KERNEL_FUNCTION f);
+	State(GKernel);
 	~State();
 
 	State(const State &s){
-
-		// TODO
 
 		this->kernel = s.kernel;
 		this->fitnessScore = s.fitnessScore;
 		this->scoreIsCached = s.scoreIsCached;
     }
 
-    bool operator == (const State &s) {
+	friend bool operator < (const State& one, const State& two){
+		return one.fitnessScore > two.fitnessScore;
+	}
 
-        // TODO
+    bool operator == (const State &s) {
 
 		return this->kernel == s.kernel;
     }
@@ -37,13 +37,14 @@ public:
 		return *this;
 	}
 
-	KERNEL_FUNCTION getKernel(){
+	GKernel getKernel(){
 		return this->kernel;
 	}
 
 	/* Could also return double here */
 
 	double fitness();
+	double constFitness() const;
 	
 	/* Should be called a small percentage of the time */
 
@@ -56,8 +57,9 @@ private:
 
 	/* DEFINE ACTUAL STATE VARIABLES HERE */
 
-	KERNEL_FUNCTION kernel;
+	GKernel kernel;
 	struct svm_model* model;
 
 };
+
 #endif

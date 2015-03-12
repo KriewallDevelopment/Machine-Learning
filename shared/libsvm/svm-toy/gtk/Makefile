@@ -3,8 +3,8 @@ CXX? = g++
 CFLAGS = -Wall -O3 -g `pkg-config --cflags gtk+-2.0`
 LIBS = `pkg-config --libs gtk+-2.0`
 
-svm-toy: main.o interface.o callbacks.o ../../svm.o ../../aks.o
-	$(CXX) $(CFLAGS) main.o interface.o callbacks.o ../../svm.o ../../aks.o -o svm-toy $(LIBS)
+svm-toy: main.o interface.o callbacks.o ../../svm.o
+	$(CXX) $(CFLAGS) main.o interface.o callbacks.o ../../svm.o -o svm-toy $(LIBS)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
