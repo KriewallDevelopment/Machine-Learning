@@ -41,6 +41,10 @@ public:
 		return this->kernel;
 	}
 
+	void setKernelAlpha(int idx, double val){
+		kernel.alphas[idx] = val;
+	}
+
 	void print();
 
 	/* Could also return double here */

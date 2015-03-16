@@ -28,6 +28,10 @@ public:
 
 	State breed(State,State);
 
+	/* IS THIS EVEN ETHICAL ?? */
+
+	void genocide();
+
 private:
 
 	int mutationChance;

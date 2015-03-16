@@ -95,18 +95,21 @@ void State::mutate(){
 		kernel.alphas[affectedIndex] = rand() * 1.0;
 	}
 	else{
+
+		double sign = (rand() % 2 == 1) ? 1.0 : -1.0;
+
 		switch(rand() % 4){
 		case 0:
-			kernel.alphas[affectedIndex] = pow(oldVal,2.0);
+			kernel.alphas[affectedIndex] = sign * pow(oldVal,2.0);
 			break;
 		case 1:
-			kernel.alphas[affectedIndex] = pow(oldVal,0.5);
+			kernel.alphas[affectedIndex] = sign * pow(oldVal,0.5);
 			break;
 		case 2:
 			kernel.alphas[affectedIndex] = 0.0;
 			break;
 		case 3:
-			kernel.alphas[affectedIndex] = rand() * 1.0;
+			kernel.alphas[affectedIndex] = rand() * sign;
 			break;
 		}
 	}

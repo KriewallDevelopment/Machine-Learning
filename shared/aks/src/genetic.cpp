@@ -62,6 +62,11 @@ State GeneticSimulator::search(int numberOfGenerations){
 
 			mutationChance = MIN(mutationChance + 5, 100);
 			cout << "Mutation Chance: " << mutationChance << endl;
+
+			if(mutationChance > 75){
+				genocide();
+				mutationChance = 5;
+			}
 		}
 
 		cout << "Current best state: " << bestFound.fitness() << endl;
@@ -70,7 +75,7 @@ State GeneticSimulator::search(int numberOfGenerations){
 		cout << "- - - - - - - - - - - - - - - - -\n" << endl;
 		flush(cout);
 
-		if(bestFound.fitness() > 0.99)
+		if(bestFound.fitness() > 0.995)
 			break;
 
 
@@ -109,24 +114,8 @@ State GeneticSimulator::breed(State one, State two){
 
 		double alpha1 = k1.alphas[i];
 		double alpha2 = k2.alphas[i];
-		double avg = 0.0;
 
-		switch(rand() % 4){
-		
-		case 0:
-			avg = (alpha1 + alpha2) /2.0; break;
-		
-		case 1:
-			avg = alpha1 + alpha2; break;
-	
-		case 2:
-			avg = fabs(alpha1 - alpha2);
-
-		case 3:
-			avg = alpha1 * alpha2;
-		}
-
-		alphas.push_back(avg);
+		alphas.push_back((alpha1 + alpha2) / 2.0);
 	}
 	
 	GKernel k3;
@@ -137,4 +126,31 @@ State GeneticSimulator::breed(State one, State two){
 		combined.mutate();
 
 	return combined;	
+}
+
+void GeneticSimulator::genocide(){
+
+	cout << "GENOCIDE" << endl;
+
+	int half = currentPopulation.size() / 2;
+
+	currentPopulation[4].setKernelAlpha(0,1.0);
+	currentPopulation[4].setKernelAlpha(0,0.0);
+	currentPopulation[4].setKernelAlpha(0,0.0);
+	currentPopulation[4].setKernelAlpha(0,0.0);
+
+	currentPopulation[5].setKernelAlpha(0,0.0);
+	currentPopulation[5].setKernelAlpha(0,1.0);
+	currentPopulation[5].setKernelAlpha(0,0.0);
+	currentPopulation[5].setKernelAlpha(0,0.0);
+
+	currentPopulation[6].setKernelAlpha(0,0.0);
+	currentPopulation[6].setKernelAlpha(0,0.0);
+	currentPopulation[6].setKernelAlpha(0,1.0);
+	currentPopulation[6].setKernelAlpha(0,0.0);
+
+	currentPopulation[7].setKernelAlpha(0,0.0);
+	currentPopulation[7].setKernelAlpha(0,0.0);
+	currentPopulation[7].setKernelAlpha(0,0.0);
+	currentPopulation[7].setKernelAlpha(0,1.0);
 }
