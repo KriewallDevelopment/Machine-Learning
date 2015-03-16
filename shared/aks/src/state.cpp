@@ -88,37 +88,26 @@ void State::mutate(){
 
 	cout << "MUTATION" << endl;
 
-	int numberOfMutations = rand() % kernel.alphas.size();
+	int affectedIndex = rand() % kernel.alphas.size();
+	double oldVal = kernel.alphas[affectedIndex];
 
-	while(numberOfMutations--){
-
-		int affectedIndex = rand() % kernel.alphas.size();
-		double oldVal = kernel.alphas[affectedIndex];
-
-		if(CLOSE_TO(oldVal,0.0)){
+	if(CLOSE_TO(oldVal,0.0)){
+		kernel.alphas[affectedIndex] = rand() * 1.0;
+	}
+	else{
+		switch(rand() % 4){
+		case 0:
+			kernel.alphas[affectedIndex] = pow(oldVal,2.0);
+			break;
+		case 1:
+			kernel.alphas[affectedIndex] = pow(oldVal,0.5);
+			break;
+		case 2:
+			kernel.alphas[affectedIndex] = 0.0;
+			break;
+		case 3:
 			kernel.alphas[affectedIndex] = rand() * 1.0;
-		}
-		else{
-			switch(rand() % 6){
-			case 0:
-				kernel.alphas[affectedIndex] = pow(oldVal,2.0);
-				break;
-			case 1:
-				kernel.alphas[affectedIndex] = pow(oldVal,0.5);
-				break;
-			case 2:
-				kernel.alphas[affectedIndex] = oldVal / 2.0;
-				break;
-			case 3:
-				kernel.alphas[affectedIndex] = oldVal * 2.0;
-				break;
-			case 4:
-				kernel.alphas[affectedIndex] = 0.0;
-				break;
-			case 5:
-				kernel.alphas[affectedIndex] = rand() * 1.0;
-				break;
-			}
+			break;
 		}
 	}
 }
