@@ -41,6 +41,8 @@ public:
 		return this->kernel;
 	}
 
+	void print();
+
 	/* Could also return double here */
 
 	double fitness();

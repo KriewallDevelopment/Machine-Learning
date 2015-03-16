@@ -12,6 +12,7 @@ public:
 
 	GeneticSimulator(){
 		srand(time(0));
+		mutationChance = 5;
 	};
 
 	void addToPopulation(State s){
@@ -27,12 +28,9 @@ public:
 
 	State breed(State,State);
 
-
-	/* optional */
-
-	void genocide();
-
 private:
+
+	int mutationChance;
 
 	State bestFound;
 	std::vector<State> currentPopulation;

@@ -6,6 +6,8 @@
 #include <iostream>
 #include <algorithm>
 
+#define MIN(x,y) ((x < y) ? x : y)
+
 using std::vector;
 using std::cout;
 using std::endl;
@@ -52,9 +54,19 @@ State GeneticSimulator::search(int numberOfGenerations){
 
 		if(currentPopulation[0].fitness() > bestFound.fitness()){
 			bestFound = currentPopulation[0];
+			mutationChance = 5;
+		}
+		else{
+		
+			/* Increase mutations when we hit top of hill */
+
+			mutationChance = MIN(mutationChance + 5, 100);
+			cout << "Mutation Chance: " << mutationChance << endl;
 		}
 
 		cout << "Current best state: " << bestFound.fitness() << endl;
+		cout << "alphas: ";
+		bestFound.print();
 		cout << "- - - - - - - - - - - - - - - - -\n" << endl;
 		flush(cout);
 
@@ -75,17 +87,6 @@ State GeneticSimulator::search(int numberOfGenerations){
 
 			currentPopulation[i] = breed(one,two);
 		}
-
-		/* Mutate? 5% chance, e.g. */
-
-		int r = rand() % 100;
-
-		if(r < 5)
-			currentPopulation[rand() % populationSize].mutate();
-
-
-		if(currentGeneration % 10 == 0)
-			genocide();
 
 		currentGeneration++;
 	}
@@ -132,16 +133,8 @@ State GeneticSimulator::breed(State one, State two){
 	k3.alphas = alphas;
 	State combined(k3);
 
+	if(rand() % 100 < mutationChance)
+		combined.mutate();
+
 	return combined;	
-}
-
-
-/* Is it even ethical to call this function? */
-
-void GeneticSimulator::genocide(){
-
-//	const unsigned int cutoff = currentPopulation.size() / 2;
-
-//	currentPopulation.erase(currentPopulation.begin() + cutoff,
-//							currentPopulation.end());
 }

@@ -1,9 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
+#include <iostream>
 #include "state.h"
 #include "svm.h"
 
 using std::vector;
+using std::cout;
+using std::endl;
 
 extern struct svm_problem 	prob;
 extern struct svm_parameter param;
@@ -21,6 +25,14 @@ State::State(GKernel k){
 	scoreIsCached = false;
 	fitnessScore = -1.0;
 	kernel = k;
+}
+
+void State::print(){
+
+	for(int i=0; i < kernel.alphas.size(); i++)
+		cout << kernel.alphas[i] << " ";
+
+	cout << endl;
 }
 
 double State::fitness(){
@@ -74,7 +86,41 @@ void State::mutate(){
 	 * This will get called very infrequently
 	 */
 
+	cout << "MUTATION" << endl;
 
+	int numberOfMutations = rand() % kernel.alphas.size();
+
+	while(numberOfMutations--){
+
+		int affectedIndex = rand() % kernel.alphas.size();
+		double oldVal = kernel.alphas[affectedIndex];
+
+		if(CLOSE_TO(oldVal,0.0)){
+			kernel.alphas[affectedIndex] = rand() * 1.0;
+		}
+		else{
+			switch(rand() % 6){
+			case 0:
+				kernel.alphas[affectedIndex] = pow(oldVal,2.0);
+				break;
+			case 1:
+				kernel.alphas[affectedIndex] = pow(oldVal,0.5);
+				break;
+			case 2:
+				kernel.alphas[affectedIndex] = oldVal / 2.0;
+				break;
+			case 3:
+				kernel.alphas[affectedIndex] = oldVal * 2.0;
+				break;
+			case 4:
+				kernel.alphas[affectedIndex] = 0.0;
+				break;
+			case 5:
+				kernel.alphas[affectedIndex] = rand() * 1.0;
+				break;
+			}
+		}
+	}
 }
 
 State::~State(){

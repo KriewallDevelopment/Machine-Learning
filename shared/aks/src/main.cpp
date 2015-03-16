@@ -42,8 +42,9 @@ void perform_aks(){
 
 	vector<double> alphas;
 	alphas.push_back(0.0);
-	alphas.push_back(21.75);
-	alphas.push_back(5166676.984727);
+	alphas.push_back(0.0);
+	//alphas.push_back(7.75e+6);
+	alphas.push_back(1.0);
 	alphas.push_back(0.0);
 
 	GKernel test;
@@ -52,8 +53,10 @@ void perform_aks(){
 	State s1(test);
 
 	test.alphas[0]= 0.0;
-	test.alphas[1] = 247.406;
-	test.alphas[2] = 15500030.954181;
+	//test.alphas[1] = 247.406;
+	//test.alphas[2] = 15500030.954181;
+	test.alphas[1] = 1.0;
+	test.alphas[2] = 0.5;
 	test.alphas[3] = 0.0;
 	State s2(test);
 
