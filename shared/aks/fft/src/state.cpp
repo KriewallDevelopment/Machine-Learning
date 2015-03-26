@@ -88,7 +88,10 @@ void State::mutate(){
 
 	cout << "MUTATION" << endl;
 
-	kernel.freq[rand() % SAMPLE_N][0] = (rand() % 200)* 1.0;
+	double max = (rand() % 10000) * 1.0;
+
+	kernel.freq[rand() % SAMPLE_N][0] = max;
+	kernel.freq[rand() % SAMPLE_N][0] = max;
 }
 
 State::~State(){

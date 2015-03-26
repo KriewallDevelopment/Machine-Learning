@@ -10,17 +10,9 @@
 #include "svm.h"
 #include "state.h"
 #include <iostream>
-#include <vector>
-#include <deque>
-#include <set>
-#include <utility>
 
 using std::cout;
 using std::endl;
-using std::vector;
-using std::deque;
-using std::set;
-using std::pair;
 
 /* OUR NEW IMPROVED KERNEL */
 
@@ -96,212 +88,128 @@ public:
 	int get_data(const int index, Qfloat **data, int len);
 	void swap_index(int i, int j);
 private:
-
 	int l;
 	long int size;
-
 	struct head_t
 	{
-		//struct head_t* prev, *next;
+		head_t *prev, *next;	// a circular list
 		Qfloat *data;
 		int len;		// data[0,len) is cached in this entry
-
-		int columnNumber;
-
-		bool operator == (head_t &a){
-			return a.data == data && a.len == len;
-		}
-
-		head_t& operator = (head_t &a){
-			data = a.data;
-			len = a.len;
-			columnNumber = a.columnNumber;
-			return *this;
-		}
 	};
 
-	/* list of length l with head_t entires */
-
-	deque<head_t> list;
-
-	int CACHE_MAX_COLUMNS;
-
-	//head_t *head;
-	//head_t lru_head;
+	head_t *head;
+	head_t lru_head;
 	void lru_delete(head_t *h);
 	void lru_insert(head_t *h);
+
+	int item_cnt;
 };
 
 Cache::Cache(int l_,long int size_):l(l_),size(size_)
 {
-	//head = (head_t *)calloc(l,sizeof(head_t));	// initialized to 0
+	head = (head_t *)calloc(l,sizeof(head_t));	// initialized to 0
 	size /= sizeof(Qfloat);
 	size -= l * sizeof(head_t) / sizeof(Qfloat);
 	size = max(size, 2 * (long int) l);	// cache must be large enough for two columns
-	//lru_head.next = lru_head.prev = &lru_head;
-
-	CACHE_MAX_COLUMNS = 1000;
-
-	head_t zerohead;
-	zerohead.data = NULL;
-	zerohead.len = 0;
-
-	for(int i=0; i < l; i++){
-		zerohead.columnNumber = i;
-		list.push_back(zerohead);
-	}
+	lru_head.next = lru_head.prev = &lru_head;
+	
+	item_cnt = 0;
 }
 
 Cache::~Cache()
 {
-	for(int i=0; i < list.size(); i++)
-		if(list[i].data)
-			free(list[i].data);
-
-	//for(head_t *h = lru_head.next; h != &lru_head; h=h->next)
-	//	free(h->data);
-	//free(head);
+	for(head_t *h = lru_head.next; h != &lru_head; h=h->next)
+		free(h->data);
+	free(head);
 }
 
 void Cache::lru_delete(head_t *h)
 {
-
-	deque<head_t>::iterator itr = list.begin();
-
-	while(itr != list.end()){
-		
-		if(*itr == *h)
-			break;
-
-		itr++;
-	}
-
-	if(itr == list.end())
+	if(!h)
 		return;
 
-	/* itr is the element to be removed */
+	if(item_cnt < 2){
+		printf("Cache Empty: size %i\n",item_cnt - 1);
 
-	head_t element = *itr;
+		for(head_t *h = lru_head.next; h != &lru_head; h=h->next)
+			free(h->data);
 
-	element.len = 0;
+		free(head);
 
-	if(element.data){
-		free(element.data);
-		element.data = NULL;
+		head = (head_t *)calloc(l,sizeof(head_t));	// initialized to 0
+		lru_head.next = lru_head.prev = &lru_head;
+		item_cnt = 0;
+		
+		return;
 	}
 
-	list.erase(itr);
-	list.push_back(element);
+	// delete from current location
+
+	if(item_cnt == 2 || h->prev == (head_t*)0xFFFFFFFF){
+		lru_head.next = lru_head.prev = &lru_head;
+		return;
+	}
+
+	h->prev->next = h->next;
+	h->next->prev = h->prev;
+
+	item_cnt--;
 }
 
 void Cache::lru_insert(head_t *h)
 {
-	list.push_front(*h);
-}
+	// insert to last position
+	h->next = &lru_head;
+	h->prev = lru_head.prev;
+	h->prev->next = h;
+	h->next->prev = h;
 
-// request data [0,len)
-// return some position p where [p,len) need to be filled
-// (p >= len if nothing needs to be filled)
+	item_cnt++;
+}
 
 int Cache::get_data(const int index, Qfloat **data, int len)
 {
+	head_t *h = &head[index];
+	if(h->len) lru_delete(h);
+	int more = len - h->len;
 
-	deque<head_t>::iterator itr = list.begin();
-
-	/* Find the column in the list */
-
-	while(itr != list.end()){
-
-		if(itr->columnNumber == index)
-			break;
-
-		itr++;
-	}
-
-	/* Sanity */
-
-	if(itr == list.end()){
-		fprintf(stderr,"Fatal: Index not in deque\n");
-		exit(EXIT_FAILURE);
-	}
-
-	head_t element = *itr;
-	int p = 0;
-
-	list.erase(itr);
-
-	/* Already in cache? */
-
-	if(element.data){
-
-		if(element.len < len){
-			element.data = (Qfloat*)realloc(element.data,len * sizeof(Qfloat));
-			p = element.len;
-			element.len = len;
-		}
-		else
-			p = len;
-	}
-	else{
-
-		deque<head_t>::iterator last = list.begin() + CACHE_MAX_COLUMNS;
-
-		if(last->data){
-			free(last->data);
-			last->data = NULL;
-			last->len = 0;
+	if(more > 0)
+	{
+		// free old space
+		while(size < more)
+		{
+			head_t *old = lru_head.next;
+			lru_delete(old);
+			free(old->data);
+			size += old->len;
+			old->data = 0;
+			old->len = 0;
 		}
 
-		element.data = (Qfloat*)malloc(sizeof(Qfloat) * len);
-		element.len = len;
-		p = 0;
+		// allocate new space
+		h->data = (Qfloat *)realloc(h->data,sizeof(Qfloat)*len);
+		size -= more;
+		swap(h->len,len);
 	}
 
-	*data = element.data;
-	list.push_front(element);
-
-	return p;	
+	lru_insert(h);
+	*data = h->data;
+	return len;
 }
 
 void Cache::swap_index(int i, int j)
 {
 	if(i==j) return;
 
-	deque<head_t>::iterator itri = list.end();
-	deque<head_t>::iterator itrj = list.end();
-	deque<head_t>::iterator itr = list.begin();
-
-	while(itr != list.end() && (itri == list.end() || itrj == list.end())){
-
-		if(itr->columnNumber == i)
-			itri = itr;
-
-		if(itr->columnNumber == j)
-			itrj = itr;
-	}
-
-	if(itri != list.end() && itrj != list.end()){
-
-		itri->columnNumber = j;
-		itrj->columnNumber = i;
-	}
-
-/*
-	head_t hi = list[i];
-	head_t hj = list[j];
-
-	if(hi.len) lru_delete(&hi);
-	if(hj.len) lru_delete(&hj);
-	swap(hi.data,hj.data);
-	swap(hi.len,hj.len);
-	if(hi.len) lru_insert(&hi);
-	if(hj.len) lru_insert(&hj);
+	if(head[i].len) lru_delete(&head[i]);
+	if(head[j].len) lru_delete(&head[j]);
+	swap(head[i].data,head[j].data);
+	swap(head[i].len,head[j].len);
+	if(head[i].len) lru_insert(&head[i]);
+	if(head[j].len) lru_insert(&head[j]);
 
 	if(i>j) swap(i,j);
-
-	vector<head_t>::iterator h;
-
-	for(h = list.begin(); h != list.end(); h++)
+	for(head_t *h = lru_head.next; h!=&lru_head; h=h->next)
 	{
 		if(h->len > i)
 		{
@@ -310,15 +218,14 @@ void Cache::swap_index(int i, int j)
 			else
 			{
 				// give up
-				lru_delete(&(*h));
+				lru_delete(h);
 				free(h->data);
 				size += h->len;
-				//h->data = 0;
-				//h->len = 0;
+				h->data = 0;
+				h->len = 0;
 			}
 		}
 	}
-	*/
 }
 
 //

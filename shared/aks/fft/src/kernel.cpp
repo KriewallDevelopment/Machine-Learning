@@ -1,6 +1,7 @@
 #include "kernel.h"
-#include "stdio.h"
 #include "svm.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <float.h>
 #include <math.h>
@@ -48,7 +49,7 @@ void KERNEL_INIT(struct svm_problem prob){
 	SAMPLE_UB = ceil(SAMPLE_UB);
 	SAMPLE_LB = floor(SAMPLE_LB);
 
-	SAMPLE_DELTA = fabs(SAMPLE_UB - SAMPLE_LB) / (1.0 * SAMPLE_N);
+	SAMPLE_DELTA = fabs(SAMPLE_UB - SAMPLE_LB) / ((1.0 * SAMPLE_N) - 1.0);
 
 	printf("lb: %f ub: %f\n",SAMPLE_LB,SAMPLE_UB);
 	printf("delta: %f\n",SAMPLE_DELTA);
@@ -57,37 +58,32 @@ void KERNEL_INIT(struct svm_problem prob){
 
 double GKernel::eval(const svm_node* px, const svm_node* py){
 
-	double val = 0.0;
 	double x = dot(px,py);
+	int idx = ((int)floor(((x - SAMPLE_LB) / SAMPLE_DELTA)));
 
 	/* Are we right on the first x value? */
 
-	if(CLOSE_TO(x,SAMPLE_LB))
-		return freq[0][0];
+	if(CLOSE_TO(x,SAMPLE_LB + (idx * SAMPLE_DELTA)))
+		return freq[idx][0];
 
-	for(int i=0; i < SAMPLE_N - 1; i++){
-
-		double off1 = (1.0 * i) * SAMPLE_DELTA;
-		double off2 = (1.0 * (i + 1)) * SAMPLE_DELTA;
-
-		/* Are we right on the second x value? */
-
-		if(CLOSE_TO(off2 + SAMPLE_LB, x)){
-			val = freq[i + 1][0];
-			break;
-		}
-
-		if(x < (off2 + SAMPLE_LB)){
-
-			/* Draw a straight line between y-vals and project */
-
-			double rise = freq[i+1][0] - freq[i][0];
-			double perc = (x - off1) / SAMPLE_DELTA;
-
-			val = freq[i][0] + (rise * perc);
-			break; 
-		}
+	if(idx + 1 == SAMPLE_N){
+		fprintf(stderr, "INDEX OUT OF BOUNDS\n");
+		exit(EXIT_FAILURE);		
 	}
 
-	return val;
+
+	double off1 = (1.0 * idx) * SAMPLE_DELTA;
+	double off2 = (1.0 * (idx + 1)) * SAMPLE_DELTA;
+
+	/* Are we right on the second x value? */
+
+	if(CLOSE_TO(off2 + SAMPLE_LB, x))
+		return freq[idx + 1][0];
+
+	/* Draw a straight line between y-vals and project */
+
+	double rise = freq[idx+1][0] - freq[idx][0];
+	double perc = (x - off1) / SAMPLE_DELTA;
+
+	return freq[idx][0] + (rise * perc);
 }

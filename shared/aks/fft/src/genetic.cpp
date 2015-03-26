@@ -113,46 +113,43 @@ State GeneticSimulator::breed(State one, State two){
 	GKernel k1 = one.getKernel();
 	GKernel k2 = two.getKernel();
 
-	for(int i=0; i<4; i++){
+	fftw_complex out[SAMPLE_N], out1[SAMPLE_N], out2[SAMPLE_N];
+	fftw_plan p1, p2, q;
 
-		fftw_complex out[SAMPLE_N], out1[SAMPLE_N], out2[SAMPLE_N];
-		fftw_plan p1, p2, q;
+	/* CONVOLUTION! Which is multiplication in frequency domain */
 
-		/* CONVOLUTION! Which is multiplication in frequency domain */
+	p1 = fftw_plan_dft_1d(SAMPLE_N,k1.freq,out1,FFTW_FORWARD, FFTW_ESTIMATE);
+	fftw_execute(p1);
+	p2 = fftw_plan_dft_1d(SAMPLE_N,k2.freq,out2,FFTW_FORWARD, FFTW_ESTIMATE);
+	fftw_execute(p2);
 
-		p1 = fftw_plan_dft_1d(SAMPLE_N,k1.freq,out1,FFTW_FORWARD, FFTW_ESTIMATE);
-		fftw_execute(p1);
-		p2 = fftw_plan_dft_1d(SAMPLE_N,k2.freq,out2,FFTW_FORWARD, FFTW_ESTIMATE);
-		fftw_execute(p2);
+	fftw_destroy_plan(p1);
+	fftw_destroy_plan(p2);
 
-		fftw_destroy_plan(p1);
-		fftw_destroy_plan(p2);
+	for(int i=0; i < SAMPLE_N; i++){
 
-		for(i=0; i < SAMPLE_N; i++){
+		double a = out1[i][0];
+		double b = out1[i][1];
+		double c = out2[i][0];
+		double d = out2[i][1];
 
-			double a = out1[i][0];
-			double b = out1[i][1];
-			double c = out2[i][0];
-			double d = out2[i][1];
+		out[i][0] = (a * c) - (b * d);
+		out[i][1] = (a * d) + (b * c);
+   	}
 
-			out[i][0] = (a * c) - (b * d);
-			out[i][1] = (a * d) + (b * c);
-    	}
+	q = fftw_plan_dft_1d(SAMPLE_N, out, freq, FFTW_BACKWARD, FFTW_ESTIMATE);
+   	fftw_execute(q);
 
-		q = fftw_plan_dft_1d(SAMPLE_N, out, freq, FFTW_BACKWARD, FFTW_ESTIMATE);
-    	fftw_execute(q);
+	/* Normalize */
 
-		/* Normalize */
+	for (int i = 0; i < SAMPLE_N; i++) {
+		freq[i][0] *= 1./SAMPLE_N;
+		freq[i][1] *= 1./SAMPLE_N;
+   	}
 
-		for (i = 0; i < SAMPLE_N; i++) {
-			freq[i][0] *= 1./SAMPLE_N;
-			freq[i][1] *= 1./SAMPLE_N;
-    	}
+	fftw_destroy_plan(q);
+	fftw_cleanup();
 
-		fftw_destroy_plan(q);
-		fftw_cleanup();
-	}
-	
 	GKernel k3;
 	k3.setArray(freq);
 	State combined(k3);

@@ -28,6 +28,8 @@ int nr_fold;
 double WIDTH = 500.0;
 double HEIGHT = 500.0;
 
+const int GENERATIONS = 50;
+
 int size = 1134;
 int total_elements = 0;
 
@@ -44,16 +46,13 @@ void perform_aks(){
 
 	GKernel test;
 	fftw_complex fft[SAMPLE_N];
-	fftw_complex tmp;
 	int i;
 
 	/* build linear kernel */
 
 	for(i=0; i < SAMPLE_N; i++){
-		tmp[0] = 1.0;
-		tmp[1] = 0.0;
-		fft[i][0] = tmp[0];
-		fft[i][1] = tmp[1];
+		fft[i][0] = 1.0;
+		fft[i][1] = 0.0;
 	}
 
 	test.setArray(fft);
@@ -61,11 +60,8 @@ void perform_aks(){
 
 	/* build polynomial kernel */
 
-	for(i=0; i < SAMPLE_N; i++){
-		
-		tmp[0] = pow(SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA), 3.0);
-		fft[i][0] = tmp[0];
-	}
+	for(i=0; i < SAMPLE_N; i++)
+		fft[i][0] = pow(SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA), 3.0);
 	
 	test.setArray(fft);
 	State s2(test);
@@ -75,9 +71,7 @@ void perform_aks(){
 	for(i=0; i < SAMPLE_N; i++){
 
 		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
-
-		tmp[0] = exp(-0.5 * (pow(x,2.0) - (2 * x)));
-		fft[i][0] = tmp[0];
+		fft[i][0] = exp(-0.5 * (pow(x,2.0) - (2 * x)));
 	}
 	
 	test.setArray(fft);
@@ -88,27 +82,77 @@ void perform_aks(){
 	for(i=0; i < SAMPLE_N; i++){
 
 		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
-		
-		tmp[0] = -1.0 * log(pow(x, 3.0));
-		fft[i][0] = tmp[0];
+		fft[i][0] = -1.0 * log(pow(x, 3.0));
 	}
 	
 	test.setArray(fft);
 	State s4(test);
 
+	/* how about sine? */
+
+	for(i=0; i < SAMPLE_N; i++){
+
+		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
+		fft[i][0] = 2.0 * sin(x);
+	}
+	
+	test.setArray(fft);
+	State s5(test);
+
+	/* maybe even cosine? */
+
+	for(i=0; i < SAMPLE_N; i++){
+
+		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
+		fft[i][0] = 2.0 * cos(x);
+	}
+	
+	test.setArray(fft);
+	State s6(test);
+
+	/* Lets high-ball it */
+
+	for(i=0; i < SAMPLE_N; i++){
+
+		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
+		fft[i][0] = 10000.0;
+	}
+	
+	test.setArray(fft);
+	State s7(test);
+
+	/* and finally low-ball it */
+
+	for(i=0; i < SAMPLE_N; i++){
+
+		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
+		fft[i][0] = x * 10000.0;
+	}
+	
+	test.setArray(fft);
+	State s8(test);
+
 	sim.addToPopulation(s1);
-	sim.addToPopulation(s1);
-	sim.addToPopulation(s1);
-	sim.addToPopulation(s1);
+	sim.addToPopulation(s2);
+	sim.addToPopulation(s3);
+	sim.addToPopulation(s4);
+	sim.addToPopulation(s5);
+	sim.addToPopulation(s6);
+	sim.addToPopulation(s7);
+	sim.addToPopulation(s8);
 
 	s1.print();
 	s2.print();
 	s3.print();
 	s4.print();
+	s5.print();
+	s6.print();
+	s7.print();
+	s8.print();
 
 	State best;
 
-	best = sim.search(50);
+	best = sim.search(GENERATIONS);
 	aks_kernel_obj = best.getKernel();
 
 	printf("Genetic search found ");
