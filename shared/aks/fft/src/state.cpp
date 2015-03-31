@@ -90,8 +90,23 @@ void State::mutate(){
 
 	double max = (rand() % 10000) * 1.0;
 
-	kernel.freq[rand() % SAMPLE_N][0] = max;
-	kernel.freq[rand() % SAMPLE_N][0] = max;
+	switch(rand() % 3){
+
+	case 0:
+		kernel.freq[rand() % SAMPLE_N][0] = max;
+		kernel.freq[rand() % SAMPLE_N][0] = max;
+		break;
+
+	case 1:
+		kernel.freq[rand() % SAMPLE_N][0] = 0.0;
+		kernel.freq[rand() % SAMPLE_N][0] = 0.0;
+		break;
+
+	case 2:
+		for(int i=0; i < SAMPLE_N; i++)
+			kernel.freq[i][0] *= ((rand() % 100) * 1.0);
+		break;
+	}
 }
 
 State::~State(){

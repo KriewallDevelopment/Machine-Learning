@@ -90,7 +90,7 @@ State GeneticSimulator::search(int numberOfGenerations){
 			/* Select (heuristically?) two parents to breed */
 
 			State one = currentPopulation[i - start];
-			State two = currentPopulation[i];
+			State two = currentPopulation[start + (rand() % start)];
 
 			currentPopulation[i] = breed(one,two);
 		}
@@ -135,6 +135,8 @@ State GeneticSimulator::breed(State one, State two){
 
 		out[i][0] = (a * c) - (b * d);
 		out[i][1] = (a * d) + (b * c);
+		//out[i][0] = (out1[i][0] + out2[i][0]) / 2.0;
+		//out[i][1] = (out1[i][1] + out2[i][1]) / 2.0;
    	}
 
 	q = fftw_plan_dft_1d(SAMPLE_N, out, freq, FFTW_BACKWARD, FFTW_ESTIMATE);

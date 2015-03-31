@@ -97,6 +97,7 @@ void State::mutate(){
 	else{
 
 		double sign = (rand() % 2 == 1) ? 1.0 : -1.0;
+		//double sign = 1.0;
 
 		switch(rand() % 4){
 		case 0:

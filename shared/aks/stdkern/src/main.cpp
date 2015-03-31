@@ -30,12 +30,15 @@ double HEIGHT = 500.0;
 
 int size = 1134;
 int total_elements = 0;
+int NUM_GENERATIONS = 200;
 
 double run_aks(const svm_node* px, const svm_node* py){
 	return aks_kernel_obj.eval(px,py);
 }
 
 void perform_aks(){
+
+	printf("size: %i\n", prob.l);
 
 	aks_kernel = run_aks;
 	GeneticSimulator sim;
@@ -102,7 +105,7 @@ void perform_aks(){
 	sim.addToPopulation(s7);
 	sim.addToPopulation(s8);
 
-	best = sim.search(50);
+	best = sim.search(NUM_GENERATIONS);
 	aks_kernel_obj = best.getKernel();
 
 	printf("Genetic search found ");
@@ -284,6 +287,8 @@ int main(int argc, char **argv)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     gluOrtho2D(0.0,WIDTH*1.0, 0.0, HEIGHT*1.0);
+
+	size = prob.l;
 
 	perform_aks();
 

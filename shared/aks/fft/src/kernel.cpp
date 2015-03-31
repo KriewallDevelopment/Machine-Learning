@@ -32,7 +32,7 @@ void KERNEL_INIT(struct svm_problem prob){
 
 			pj = vitr[cj];
 
-			double dp = linear(pi,pj);
+			double dp = (dot(pi,pi) + dot(pj,pj)) - (2 * dot(pi,pj));
 
 			if(dp > SAMPLE_UB)
 				SAMPLE_UB = dp;
@@ -58,7 +58,7 @@ void KERNEL_INIT(struct svm_problem prob){
 
 double GKernel::eval(const svm_node* px, const svm_node* py){
 
-	double x = dot(px,py);
+	double x = (dot(px,px) + dot(py,py)) - (2 * dot(px,py));
 	int idx = ((int)floor(((x - SAMPLE_LB) / SAMPLE_DELTA)));
 
 	/* Are we right on the first x value? */

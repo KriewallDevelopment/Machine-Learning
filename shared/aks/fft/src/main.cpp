@@ -28,7 +28,7 @@ int nr_fold;
 double WIDTH = 500.0;
 double HEIGHT = 500.0;
 
-const int GENERATIONS = 50;
+const int GENERATIONS = 100;
 
 int size = 1134;
 int total_elements = 0;
@@ -60,8 +60,10 @@ void perform_aks(){
 
 	/* build polynomial kernel */
 
-	for(i=0; i < SAMPLE_N; i++)
-		fft[i][0] = pow(SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA), 3.0);
+	for(i=0; i < SAMPLE_N; i++){
+		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
+		fft[i][0] = pow((0.5 * x) + 1.0, 2.0);
+	}
 	
 	test.setArray(fft);
 	State s2(test);
@@ -71,7 +73,7 @@ void perform_aks(){
 	for(i=0; i < SAMPLE_N; i++){
 
 		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
-		fft[i][0] = exp(-0.5 * (pow(x,2.0) - (2 * x)));
+		fft[i][0] = exp(-0.5 * x);
 	}
 	
 	test.setArray(fft);
@@ -126,7 +128,7 @@ void perform_aks(){
 	for(i=0; i < SAMPLE_N; i++){
 
 		double x = SAMPLE_LB + ((i * 1.0) * SAMPLE_DELTA);
-		fft[i][0] = x * 10000.0;
+		fft[i][0] = x * 10.0;
 	}
 	
 	test.setArray(fft);
