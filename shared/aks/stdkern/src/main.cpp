@@ -30,7 +30,7 @@ double HEIGHT = 500.0;
 
 int size = 1134;
 int total_elements = 0;
-int NUM_GENERATIONS = 200;
+int NUM_GENERATIONS = 20000;
 
 double run_aks(const svm_node* px, const svm_node* py){
 	return aks_kernel_obj.eval(px,py);

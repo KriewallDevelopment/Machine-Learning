@@ -60,10 +60,12 @@ static double fitness(struct svm_problem prob, struct svm_model* model){
 
         double d = svm_predict(model, px);
 
-        if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+        if(((int)yitr[counter]) == ((int)d))
             correct++;
-        else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
-            correct++;
+        //if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+        //    correct++;
+        //else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+        //    correct++;
 
         counter++;
     }

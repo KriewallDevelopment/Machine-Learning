@@ -71,9 +71,11 @@ static double fitness(){
 
         double d = svm_predict(model, px);
 
-        if(((int)yitr[counter]) == 1 && ((int)d) == 1)
-            correct++;
-        else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+        //if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+        //    correct++;
+        //else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+        //    correct++;
+        if(((int)yitr[counter]) == ((int)d))
             correct++;
 
         counter++;
@@ -274,9 +276,9 @@ int main(int argc, char **argv)
 	else
 	{
 		model = svm_train(&prob,&param);
-		fitness();
+		//fitness();
 
-		glutMainLoop();
+		//glutMainLoop();
 
 		if(svm_save_model(model_file_name,model))
 		{

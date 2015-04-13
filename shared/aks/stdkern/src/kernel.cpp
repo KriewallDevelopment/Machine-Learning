@@ -16,7 +16,7 @@ double GKernel::eval(const svm_node* px, const svm_node* py){
 		val += alphas[2] * rbf(px,py);
 
 	if(!CLOSE_TO(alphas[3],0.0))
-		val += alphas[3] * log(px,py);
+		val += alphas[3] * sigmoid(px,py);
 
 	return val;
 }
