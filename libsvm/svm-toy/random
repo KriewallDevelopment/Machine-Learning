@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+from random import random as rand
+
+for i in range(0,10):
+	x = rand() * 100
+	y = rand() * 100
+	print "(" + str(x) + "," + str(y) + ")"
