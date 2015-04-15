@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-cp output5 ../../../Machine-Learning/shared/libsvm/output
-cp input5 ../../../Machine-Learning/shared/libsvm/input
+cp output5 ../../libsvm/output
+cp input5 ../../libsvm/input
 
-cd ../../../Machine-Learning/shared/libsvm/
+cd ../../libsvm/
 
 echo "Scaling data..."
 
