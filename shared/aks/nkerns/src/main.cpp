@@ -32,6 +32,8 @@ int size = 1134;
 int total_elements = 0;
 int NUM_GENERATIONS = 10;
 
+double* dots;
+
 double run_aks(const svm_node* px, const svm_node* py){
 	return aks_kernel_obj.eval(px,py);
 }
@@ -39,6 +41,11 @@ double run_aks(const svm_node* px, const svm_node* py){
 void perform_aks(){
 
 	printf("size: %i\n", prob.l);
+
+	dots = new double[prob.l];
+
+	for(int i=0;i<prob.l;i++)
+            dots[i] = dot(prob.x[i],prob.x[i]);
 
 	aks_kernel = run_aks;
 	GeneticSimulator sim;

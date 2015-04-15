@@ -4,8 +4,12 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <vector>
+#include <cmath>
+#include <iostream>
+#include <inttypes.h>
 
-
+using std::cout;
+using std::endl;
 using std::vector;
 
 #define IS_WHITE(x)		((x) == 255)
@@ -113,6 +117,41 @@ static vector<Interval> getWhiteIntervals(cv::Mat img, int col){
 	}
 
 	return ret;
+}
+
+PointPair getSingleImageRectangle(cv::Mat img){
+
+	PointPair p;
+
+	/* Left */
+
+	int idx = 0;
+
+	while(true){
+
+		if(getBlackIntervals(img,idx).size() == 0)
+			idx++;
+		else
+			break;
+	}
+
+	p.p1.x = BIGGER(idx - 1, 0);
+
+	/* Right */
+
+	idx = 27;
+
+	while(true){
+
+		if(getBlackIntervals(img,idx).size() == 0)
+			idx--;
+		else
+			break;
+	}
+
+	p.p2.x = SMALLER(idx + 1, 27);
+
+	return p;
 }
 
 
@@ -268,10 +307,137 @@ cv::Mat centerImage(cv::Mat img){
 cv::Mat deskew(cv::Mat img){
 
 	int SZ = 28;
+	cv::Mat output(SZ, SZ, CV_8UC1, cv::Scalar(255));
+	cv::Moments m = cv::moments(img);
+
+	if(abs(m.mu02) < 1e-2)
+		return img;
+
+	float skew = m.mu11 / m.mu02;
+	skew *= -10.0;
+	//float skew = -0.5;
+
+	//cout << "SKEW: " << skew << endl;
+
+	cv::Mat M(2, 3, cv::DataType<float>::type);
+
+	M.at<float>(0,0) = 1.0;
+	M.at<float>(0,1) = skew;
+	M.at<float>(0,2) = -0.5 * SZ * skew;
+	M.at<float>(1,0) = 0.0;
+	M.at<float>(1,1) = 1.0;
+	M.at<float>(1,2) = 0.0;
+
+	cv::warpAffine(img, output, M, img.size(), 
+						cv::WARP_INVERSE_MAP | cv::INTER_LINEAR,
+						cv::BORDER_CONSTANT,
+						cv::Scalar(255,255,255));
+
+	return output;
+
+	/***********************************/
 
 	vector<cv::Vec4i> lines;
-	cv::HoughLinesP(img, lines, 1, CV_PI / 180.0, 100, SZ / 4.0, 20);
+	cv::HoughLinesP(img, lines, 1, CV_PI / 180.0, SZ / 5.0, 20);
 
-	
+	double angle = 0.0;
+
+	cout << "Line count: " << lines.size() << endl;
+
+	if(lines.size() == 0)
+		return img;
+
+	for(int i=0; i < lines.size(); i++){
+
+		angle += atan2(	(double)lines[i][3] - lines[i][1],
+						(double)lines[i][2] - lines[i][0]);
+	}
+
+	angle /= lines.size();
+
+	/* Convert to degrees */
+
+	angle = (180.0 / CV_PI) * angle; 
+
+	cout << "Average Angle: " << angle << endl;
+
+	cv::Point2f center(SZ / 2.0, SZ / 2.0);
+
+	cv::Mat rotation = cv::getRotationMatrix2D(center, angle, 1.0);
+	//cv::Mat output(SZ, SZ, CV_8UC1, cv::Scalar(255));
+
+	cv::warpAffine(img, output, rotation, img.size());
+
+	return output;
 }
+
+cv::Mat hog(cv::Mat img){
+
+	int NUM_BINS = 64;
+
+	cv::Mat hist;
+
+	int channels = 0;
+	int histSize = 32;
+	const float range[] = { 0, 256 };
+	const float* r = &range[0];
+	const float** ranges = &r;
+
+	cv::calcHist( &img, 1, &channels, cv::Mat(),
+				hist, 1, &histSize, ranges,
+				true, false);
+
+	hist = hist / (img.rows * img.cols);
+
+	//cout << hist.size() << endl;
+
+	for(int i=0; i < hist.rows; i++){
+		cout << i + 1 << ":" << (int)hist.at<uchar>(0,i) << " ";
+	}
+
+	cout << endl;
+
+	//return hist;
+
+	cv::Mat gx, gy;
+	cv::Mat mag, angle;
+	
+	cv::Sobel(img, gx, CV_32F, 1, 0);
+	cv::Sobel(img, gy, CV_32F, 0, 1);
+
+	cv::cartToPolar(gx, gy, mag, angle);
+
+	cv::MatExpr bins = NUM_BINS * angle / (2 * CV_PI);
+
+	cv::namedWindow("test1", CV_WINDOW_AUTOSIZE);
+	cv::namedWindow("test2", CV_WINDOW_AUTOSIZE);
+
+	cv::imshow("test1", mag);
+	cv::imshow("test2", bins);
+
+	cv::waitKey(0);
+
+
+	vector<cv::Mat> bin_cells;
+	vector<cv::Mat> mag_cells;
+
+    bin_cells.push_back(bins(cv::Rect( 0,  0, 14, 14)));
+    bin_cells.push_back(bins(cv::Rect(14,  0, 14, 14)));
+    bin_cells.push_back(bins(cv::Rect( 0, 14, 14, 14)));
+    bin_cells.push_back(bins(cv::Rect(14, 14, 14, 14)));
+
+    mag_cells.push_back(mag(cv::Rect( 0,  0, 14, 14)));
+    mag_cells.push_back(mag(cv::Rect(14,  0, 14, 14)));
+    mag_cells.push_back(mag(cv::Rect( 0, 14, 14, 14)));
+    mag_cells.push_back(mag(cv::Rect(14, 14, 14, 14)));
+
+	for(int i=0; i < bin_cells.size(); i++){
+		
+		cv::Mat b = bin_cells[i];
+		cv::Mat m = mag_cells[i];
+	}
+
+	return hist;
+}
+
 #endif

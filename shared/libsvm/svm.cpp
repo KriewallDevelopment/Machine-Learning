@@ -276,7 +276,8 @@ private:
 	}
 	double kernel_rbf(int i, int j) const
 	{
-		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
+		return	(0.28125 * kernel_poly(i,j)) + (9.78662e8 * 
+				exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j]))));
 	}
 	double kernel_sigmoid(int i, int j) const
 	{

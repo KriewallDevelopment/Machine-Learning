@@ -191,6 +191,9 @@ void predict(FILE *input, FILE *output)
 
 		if(predict_label == target_label)
 			++correct;
+		else
+			printf("Guessed: %f\tActual: %f\n",predict_label,target_label);
+			
 		error += (predict_label-target_label)*(predict_label-target_label);
 		sump += predict_label;
 		sumt += target_label;

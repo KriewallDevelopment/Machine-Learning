@@ -6,6 +6,7 @@
 #include <vector>
 
 extern const int NUM_KERNELS;
+extern double* dots;
 
 inline bool CLOSE_TO(double one, double two){
 	return fabs(one - two) < 0.00001;
@@ -64,7 +65,7 @@ inline double linear(const svm_node* px, const svm_node* py){
 }
 
 inline double rbf(const svm_node* px, const svm_node* py){
-	return exp(-0.5 * (dot(px,px)+dot(py,py) - 2*dot(px,py)));
+	return exp(-0.5 * (dots[px->index] + dots[py->index] - 2*dot(px,py)));
 }
 
 inline double poly(const svm_node* px, const svm_node* py){

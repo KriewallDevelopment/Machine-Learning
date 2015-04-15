@@ -17,7 +17,7 @@ using std::endl;
 /* OUR NEW IMPROVED KERNEL */
 
 extern KERNEL_FUNCTION aks_kernel;
-
+extern double* dots;
 
 
 int libsvm_version = LIBSVM_VERSION;
@@ -168,6 +168,10 @@ int Cache::get_data(const int index, Qfloat **data, int len)
 void Cache::swap_index(int i, int j)
 {
 	if(i==j) return;
+
+	//double tmp = dots[i];
+	//dots[i] = dots[j];
+	//dots[j] = tmp;
 
 	if(head[i].len) lru_delete(&head[i]);
 	if(head[j].len) lru_delete(&head[j]);
@@ -588,6 +592,9 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	while(iter < max_iter)
 	{
 		// show progress and do shrinking
+
+		//printf("Iteration: %i\n", iter);
+		//fflush(stdout);
 
 		if(--counter == 0)
 		{

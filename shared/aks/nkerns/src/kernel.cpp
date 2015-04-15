@@ -4,6 +4,8 @@
 
 const int NUM_KERNELS = 6;
 
+extern double* dots;
+
 double GKernel::eval(const svm_node* px, const svm_node* py){
 
 	double val = 0.0;

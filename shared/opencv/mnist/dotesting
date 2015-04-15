@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+cp output5 ../../../Machine-Learning/shared/libsvm/output
+cp input5 ../../../Machine-Learning/shared/libsvm/input
+
+cd ../../../Machine-Learning/shared/libsvm/
+
+echo "Scaling data..."
+
+./svm-scale output > output.scale
+./svm-scale input > input.scale 
+
+cp output.scale ../aks/nkerns/testnums
+cp input.scale ../aks/predict/input 
+
+cd ../aks/nkerns
+head -6000 testnums > input
+
+echo "Training Models..."
+
+./main input -c 100
+
+cp input.model ../predict/
+cd ../predict/
+
+echo "Testing accuracy..."
+
+./main input input.model /dev/null

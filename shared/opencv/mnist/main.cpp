@@ -16,8 +16,55 @@ using namespace std;
 const char* IMAGE_FILE = "test/images";
 const char* LABEL_FILE = "test/labels";
 
+typedef struct {
 
-vector<Mat> getImages(){
+	Mat img;
+	PointPair p;
+
+} FEATURE;
+
+int cornerHarris_demo(Mat img)
+{
+
+  Mat dst, dst_norm, dst_norm_scaled;
+  dst = Mat::zeros( img.size(), CV_32FC1 );
+
+  /// Detector parameters
+  int blockSize = 2;
+  int apertureSize = 3;
+  double k = 0.04;
+  int thresh = 200;
+  int count = 0;
+
+  /// Detecting corners
+  cornerHarris(img, dst, blockSize, apertureSize, k, BORDER_DEFAULT );
+
+  /// Normalizing
+  normalize( dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat() );
+  convertScaleAbs( dst_norm, dst_norm_scaled );
+
+  /// Drawing a circle around corners
+  for( int j = 0; j < dst_norm.rows ; j++ )
+     { for( int i = 0; i < dst_norm.cols; i++ )
+          {
+            if( (int) dst_norm.at<float>(j,i) > thresh )
+              {
+               //circle( dst_norm_scaled, Point( i, j ), 5,  Scalar(0), 2, 8, 0 );
+				count++;
+              }
+          }
+     }
+  /// Showing the result
+  //namedWindow( "corners_window", CV_WINDOW_AUTOSIZE );
+  //imshow( "corners_window", dst_norm_scaled );
+
+//	waitKey(0);
+
+  return count;
+}
+
+
+vector<FEATURE> getImages(){
 
 	FILE* fp = fopen(IMAGE_FILE, "rb");
 
@@ -26,7 +73,7 @@ vector<Mat> getImages(){
         exit(EXIT_FAILURE);
     }
 
-	vector<Mat> images;
+	vector<FEATURE> images;
 
 	uint32_t magic;
 	uint32_t imageCount;
@@ -46,6 +93,7 @@ vector<Mat> getImages(){
     for(int i=0; i < imageCount; i++){
 
 		Mat img(rowCount, colCount, CV_8UC1);
+		FEATURE f;
 
 		for(int j=0; j < rowCount; j++){
 
@@ -57,12 +105,19 @@ vector<Mat> getImages(){
 			}
 		}
 
-		vector<PointPair> bounds = getRectangles(img);
+		//vector<PointPair> bounds = getRectangles(img);
 	
-		if(bounds.size() < 1)
-			images.push_back(img);
-		else
-			images.push_back(centerImage(cropImage(img,bounds[0])));
+		//if(bounds.size() < 1){
+		//	f.p.p1 = Point(0,0);
+		//	f.p.p2 = Point(0,0);
+			f.img = img;
+		//}
+		//else{
+		//	f.img = centerImage(cropImage(img,bounds[0]));
+		//	f.p = bounds[0];
+		//}
+		
+		images.push_back(f);
 	}
 
 	fclose(fp);
@@ -105,16 +160,23 @@ vector<int> getLabels(){
 
 int main(int argc, char* argv[]){
 
-	vector<Mat> images = getImages();
+	vector<FEATURE> images = getImages();
 	vector<int> labels = getLabels();
 
 
-	for(int itr = 2; itr < images.size(); itr++){
+	for(int itr = 0; itr < images.size(); itr++){
+	//for(int itr = 0; itr < 6000; itr++){
 	
-		Mat temp = images[itr];
+		Mat temp = images[itr].img;
+		//PointPair pp = images[itr].p;
 
-		imwrite("imgout.jpg", temp);
-		break;
+		//cout << labels[itr] << " ";
+		temp = deskew(temp);
+		//hog(temp);
+		//imwrite("imgout.jpg", temp);
+		//int corners = cornerHarris_demo(temp);
+		//break;
+		//continue;
 	
 		int bins[7][7];
 	
@@ -133,11 +195,15 @@ int main(int argc, char* argv[]){
 		}
 
 		cout << labels[itr] << " ";
+		//cout << "1:" << corners << " ";
+		//cout << "2:" << pp.p2.y - pp.p1.y << " ";
 
 		for(int i=0; i<7; i++){
 			for(int j=0; j<7; j++){
 				bins[i][j] /= 16;
 				cout << (i*7) + j + 1 << ":" << bins[i][j] << " ";
+				//cout << (i*28) + j + 1 << ":" << 
+				//	(int) temp.at<uchar>(i,j)  << " ";
 			}
 		}
 
