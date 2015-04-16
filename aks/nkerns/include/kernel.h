@@ -7,6 +7,7 @@
 
 extern const int NUM_KERNELS;
 extern double* dots;
+extern svm_parameter param;
 
 inline bool CLOSE_TO(double one, double two){
 	return fabs(one - two) < 0.00001;
@@ -65,11 +66,11 @@ inline double linear(const svm_node* px, const svm_node* py){
 }
 
 inline double rbf(const svm_node* px, const svm_node* py){
-	return exp(-0.5 * (dots[px->index] + dots[py->index] - 2*dot(px,py)));
+	return exp(-param.gamma * (dot(px,px) + dot(py,py) - 2*dot(px,py)));
 }
 
 inline double poly(const svm_node* px, const svm_node* py){
-    return pow(0.5 * dot(px,py) + 1.0, 2.0);
+    return pow(param.gamma * dot(px,py) + param.coef0, param.degree);
 }
 
 inline double sigmoid(const svm_node* px, const svm_node* py){

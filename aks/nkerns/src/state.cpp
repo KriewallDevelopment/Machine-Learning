@@ -11,8 +11,10 @@ using std::endl;
 
 extern struct svm_problem 	prob;
 extern struct svm_parameter param;
+extern struct svm_model*	pmodel;
 extern GKernel aks_kernel_obj;
 extern int size;
+extern double predict_main(int,char*[]);
 
 State::State(){
 
@@ -42,11 +44,16 @@ double State::fitness(){
 
 	aks_kernel_obj = kernel;
 	model = svm_train(&prob, &param);
+	pmodel= model;
 
 	/* Score this state! */
 
-	double score = 0.0;
+	//double score = 0.0;
 
+	char* args[] = { "./svm-predict", "test", "train.model", "/dev/null" };
+
+	double score = predict_main(4, args);
+/*
 	int counter = 0;
     int correct = 0;
 
@@ -71,6 +78,7 @@ double State::fitness(){
     }
 
 	score = (1.0 * correct)/(1.0 * counter);
+*/	
 	svm_free_and_destroy_model(&model);
 
 	/* Cache for when we get called again */

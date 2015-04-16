@@ -4,21 +4,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <math.h>
-#include <vector>
 #include "svm.h"
-#include "state.h"
 #include "stdhdr.h"
-#include "kernel.h"
-#include "genetic.h"
-
-extern double predict_main(int,char*[]);
-
-using std::vector;
-
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
-
-KERNEL_FUNCTION aks_kernel;
-GKernel aks_kernel_obj;
 
 struct svm_parameter param;		// set by parse_command_line
 struct svm_problem prob;		// set by read_problem
@@ -27,134 +15,81 @@ struct svm_node *x_space;
 int cross_validation;
 int nr_fold;
 
+//double WIDTH = 640.0;
+//double HEIGHT = 480.0;
 double WIDTH = 500.0;
 double HEIGHT = 500.0;
 
-int size = 1134;
+const int size = 1134;
 int total_elements = 0;
-int NUM_GENERATIONS = 200;
 
-double* dots;
+/*
+static double dot(const svm_node *px, const svm_node *py){
 
-double run_aks(const svm_node* px, const svm_node* py){
-	return aks_kernel_obj.eval(px,py);
+    double sum = 0;
+    while(px->index != -1 && py->index != -1)
+    {
+        if(px->index == py->index)
+        {
+            sum += px->value * py->value;
+            ++px;
+            ++py;
+        }
+        else
+        {
+            if(px->index > py->index)
+                ++py;
+            else
+                ++px;
+        }
+    }
+    return sum;
 }
 
-void perform_aks(){
+static double kern(struct svm_node* px, struct svm_node* py){
 
-	printf("size: %i\n", prob.l);
+	//return dot(px,py);
+	//return pow(0.5*dot(px,py)+1.0,3.0);
+	return exp(-0.5 * (dot(px,px)+dot(py,py) - 2*dot(px,py)));
+}
+*/
 
-	//dots = new double[prob.l];
+static double fitness(){
 
-	//for(int i=0;i<prob.l;i++)
-    //       dots[i] = dot(prob.x[i],prob.x[i]);
+	double score = 0.0;
 
-	aks_kernel = run_aks;
-	GeneticSimulator sim;
+    int counter = 0;
+    int correct = 0;
 
-	vector<double> alphas;
-	alphas.push_back(1.0);
-	alphas.push_back(0.0);
-	alphas.push_back(0.0);
-	alphas.push_back(0.0);
-	alphas.push_back(0.0);
-	alphas.push_back(0.0);
-	//alphas.push_back(0.0);
-	//alphas.push_back(0.28125);
-	//alphas.push_back(9.78662e8);
-	//alphas.push_back(0.0);
-	//alphas.push_back(0.0);
-	//alphas.push_back(0.0);
+    svm_node** vitr = prob.x;
+    double* yitr = prob.y;
+    svm_node* px;
 
-	GKernel test;
+    while(counter < prob.l){
 
-	test.alphas = alphas;
-	State s1(test);
+        px = vitr[counter];
 
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 1.0;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 0.0;
-	State s2(test);
+        double d = svm_predict(model, px);
 
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.0;
-	test.alphas[2] = 1.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 0.0;
-	State s3(test);
+        //if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+        //    correct++;
+        //else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+        //    correct++;
+        if(((int)yitr[counter]) == ((int)d))
+            correct++;
 
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.0;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 1.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 0.0;
-	State s4(test);
+        counter++;
+    }
 
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.0;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 1.0;
-	test.alphas[5] = 0.0;
-	State s5(test);
-
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.0;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 1.0;
-	State s6(test);
-
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 100.0;
-	test.alphas[2] = 20.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 0.0;
-	State s7(test);
-
-	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.5;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.5;
-	test.alphas[5] = 0.0;
-	State s8(test);
-
-	State best;
-
-	sim.addToPopulation(s1);
-	sim.addToPopulation(s2);
-	sim.addToPopulation(s3);
-	sim.addToPopulation(s4);
-	sim.addToPopulation(s5);
-	sim.addToPopulation(s6);
-	sim.addToPopulation(s7);
-	sim.addToPopulation(s8);
-
-	best = sim.search(NUM_GENERATIONS);
-	aks_kernel_obj = best.getKernel();
-	aks_kernel_obj = s1.getKernel();
-
-	printf("Genetic search found ");
-	printf("best kernel with score of %f\n", best.fitness());
-	printf("alphas: %f, %f, %f, %f\n",aks_kernel_obj.alphas[0],
-										aks_kernel_obj.alphas[1],
-										aks_kernel_obj.alphas[2],
-										aks_kernel_obj.alphas[3],
-										aks_kernel_obj.alphas[4],
-										aks_kernel_obj.alphas[5]);
+    score = (1.0 * correct)/(1.0 * counter);
+	
+	return score;
 }
 
 static void drawPoints(){
 
 	int counter = 0;
+	int correct = 0;
 
 	svm_node** vitr = prob.x;
 	double* yitr = prob.y;
@@ -171,11 +106,21 @@ static void drawPoints(){
         else
             glColor3f(0.0,0.0,1.0);
 	
+		double d = svm_predict(model, px);
+
+		if(((int)yitr[counter]) == 1 && ((int)d) == 1)
+			correct++;
+		else if(((int)yitr[counter]) == 2 && ((int)d) == 2)
+			correct++;
+	    
+
    	    glVertex2d(px[0].value * WIDTH, px[1].value * HEIGHT);
 		counter++;
    	}
 
    	glEnd();
+
+	printf("Scored %f%% on training data\n",100.0*(1.0*correct)/(1.0*counter));
 }
 
 static void drawClass(){
@@ -324,18 +269,15 @@ int main(int argc, char **argv)
     glLoadIdentity();
     gluOrtho2D(0.0,WIDTH*1.0, 0.0, HEIGHT*1.0);
 
-	size = prob.l;
-
-	perform_aks();
-
 	if(cross_validation)
 	{
 		do_cross_validation();
 	}
 	else
 	{
-	
 		model = svm_train(&prob,&param);
+		//fitness();
+
 		//glutMainLoop();
 
 		if(svm_save_model(model_file_name,model))
@@ -415,10 +357,6 @@ void parse_command_line(int argc, char **argv, char *input_file_name, char *mode
 	param.weight_label = NULL;
 	param.weight = NULL;
 	cross_validation = 0;
-
-	// FORCE QUITE MODE
-
-	print_func = &print_null;
 
 	// parse options
 	for(i=1;i<argc;i++)

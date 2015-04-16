@@ -12,6 +12,7 @@
 
 using std::cout;
 using std::endl;
+using std::cin;
 
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
@@ -276,7 +277,11 @@ private:
 	}
 	double kernel_rbf(int i, int j) const
 	{
-		return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
+		double dp = dot(x[i],x[j]);
+
+		return (0.28125   * pow(0.5 * dp + 1.0, 2.0)) + 
+		(9.78662e8 * exp(-0.5 * (x_square[i]+x_square[j]-2*dp)));
+		//return exp(-gamma*(x_square[i]+x_square[j]-2*dot(x[i],x[j])));
 	}
 	double kernel_sigmoid(int i, int j) const
 	{
@@ -363,6 +368,14 @@ double Kernel::k_function(const svm_node *x, const svm_node *y,
 			return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
 		case RBF:
 		{
+
+			double dpx	= dot(x,x);
+			double dpy	= dot(y,y);
+			double dp	= dot(x,y);
+
+			return 	(0.28125   * pow(0.5 * dp + 1.0, 2.0)) +
+					(9.78662e8 * exp(-0.5 * (dpx + dpy - 2*dp)));
+
 			double sum = 0;
 			while(x->index != -1 && y->index !=-1)
 			{
@@ -2372,7 +2385,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 		free(nz_start);
 	}
 
-	info("FITNESS: %f\n",fitness(*prob, model));
+	//info("FITNESS: %f\n",fitness(*prob, model));
 
 	return model;
 }

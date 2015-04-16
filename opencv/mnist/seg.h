@@ -7,6 +7,7 @@
 #include <cmath>
 #include <iostream>
 #include <inttypes.h>
+#include <climits>
 
 using std::cout;
 using std::endl;
@@ -304,6 +305,44 @@ cv::Mat centerImage(cv::Mat img){
 	return output;
 }
 
+int cornerHarris_demo(cv::Mat img){
+
+	cv::Mat dst, dst_norm, dst_norm_scaled;
+	dst = cv::Mat::zeros( img.size(), CV_32FC1 );
+
+	// Detector parameters
+	int blockSize = 4;
+	int apertureSize = 3;
+	double k = 0.04;
+	int thresh = 200;
+	int count = 0;
+
+	// Detecting corners
+	cv::cornerHarris(img, dst, blockSize, apertureSize, k, cv::BORDER_DEFAULT );
+
+	// Normalizing
+	cv::normalize( dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat() );
+	cv::convertScaleAbs( dst_norm, dst_norm_scaled );
+
+	// Drawing a circle around corners
+	for(int j = 0; j < dst_norm.rows ; j++ ){
+		for(int i = 0; i < dst_norm.cols; i++){
+            if((int)dst_norm.at<float>(j,i) > thresh ){
+				cv::circle( dst_norm_scaled, cv::Point( i, j ), 2,  cv::Scalar(0), 1, 8, 0 );
+				count++;
+			}
+		}
+	}
+
+	//Showing the result
+	cv::namedWindow( "corners_window", CV_WINDOW_AUTOSIZE );
+	cv::imshow( "corners_window", dst_norm_scaled );
+	cv::waitKey(0);
+
+	return count;
+}
+
+
 cv::Mat deskew(cv::Mat img){
 
 	int SZ = 28;
@@ -315,9 +354,6 @@ cv::Mat deskew(cv::Mat img){
 
 	float skew = m.mu11 / m.mu02;
 	skew *= -10.0;
-	//float skew = -0.5;
-
-	//cout << "SKEW: " << skew << endl;
 
 	cv::Mat M(2, 3, cv::DataType<float>::type);
 
@@ -334,110 +370,40 @@ cv::Mat deskew(cv::Mat img){
 						cv::Scalar(255,255,255));
 
 	return output;
-
-	/***********************************/
-
-	vector<cv::Vec4i> lines;
-	cv::HoughLinesP(img, lines, 1, CV_PI / 180.0, SZ / 5.0, 20);
-
-	double angle = 0.0;
-
-	cout << "Line count: " << lines.size() << endl;
-
-	if(lines.size() == 0)
-		return img;
-
-	for(int i=0; i < lines.size(); i++){
-
-		angle += atan2(	(double)lines[i][3] - lines[i][1],
-						(double)lines[i][2] - lines[i][0]);
-	}
-
-	angle /= lines.size();
-
-	/* Convert to degrees */
-
-	angle = (180.0 / CV_PI) * angle; 
-
-	cout << "Average Angle: " << angle << endl;
-
-	cv::Point2f center(SZ / 2.0, SZ / 2.0);
-
-	cv::Mat rotation = cv::getRotationMatrix2D(center, angle, 1.0);
-	//cv::Mat output(SZ, SZ, CV_8UC1, cv::Scalar(255));
-
-	cv::warpAffine(img, output, rotation, img.size());
-
-	return output;
 }
 
-cv::Mat hog(cv::Mat img){
+cv::Mat hog(cv::Mat image){
 
-	int NUM_BINS = 64;
+	int level =1;
 
-	cv::Mat hist;
+	vector <cv::Mat> GaussianPyramid;
+	vector <cv::Mat> LaplacianPyramid;
 
-	int channels = 0;
-	int histSize = 32;
-	const float range[] = { 0, 256 };
-	const float* r = &range[0];
-	const float** ranges = &r;
+	cv::Mat temp1, temp2, temp3;
+	cv::Mat Lap;
 
-	cv::calcHist( &img, 1, &channels, cv::Mat(),
-				hist, 1, &histSize, ranges,
-				true, false);
+	image.copyTo(temp1);
 
-	hist = hist / (img.rows * img.cols);
+	for(int i=0; i<level; i++){
 
-	//cout << hist.size() << endl;
+		cv::pyrDown(temp1, temp2);
+		cv::pyrUp(temp2, temp3, temp1.size()); 
 
-	for(int i=0; i < hist.rows; i++){
-		cout << i + 1 << ":" << (int)hist.at<uchar>(0,i) << " ";
+		Lap = temp1-temp3;
+		GaussianPyramid.push_back(temp2);
+		LaplacianPyramid.push_back(Lap);
+
+		temp1=temp2;
 	}
 
-	cout << endl;
+	//show whatever you want.
 
-	//return hist;
+	//cv::namedWindow( "corners_window", CV_WINDOW_AUTOSIZE );
+    //cv::imshow( "corners_window", /*LaplacianPyramid[0]*/ image );
 
-	cv::Mat gx, gy;
-	cv::Mat mag, angle;
-	
-	cv::Sobel(img, gx, CV_32F, 1, 0);
-	cv::Sobel(img, gy, CV_32F, 0, 1);
+	//cv::waitKey(0);
 
-	cv::cartToPolar(gx, gy, mag, angle);
-
-	cv::MatExpr bins = NUM_BINS * angle / (2 * CV_PI);
-
-	cv::namedWindow("test1", CV_WINDOW_AUTOSIZE);
-	cv::namedWindow("test2", CV_WINDOW_AUTOSIZE);
-
-	cv::imshow("test1", mag);
-	cv::imshow("test2", bins);
-
-	cv::waitKey(0);
-
-
-	vector<cv::Mat> bin_cells;
-	vector<cv::Mat> mag_cells;
-
-    bin_cells.push_back(bins(cv::Rect( 0,  0, 14, 14)));
-    bin_cells.push_back(bins(cv::Rect(14,  0, 14, 14)));
-    bin_cells.push_back(bins(cv::Rect( 0, 14, 14, 14)));
-    bin_cells.push_back(bins(cv::Rect(14, 14, 14, 14)));
-
-    mag_cells.push_back(mag(cv::Rect( 0,  0, 14, 14)));
-    mag_cells.push_back(mag(cv::Rect(14,  0, 14, 14)));
-    mag_cells.push_back(mag(cv::Rect( 0, 14, 14, 14)));
-    mag_cells.push_back(mag(cv::Rect(14, 14, 14, 14)));
-
-	for(int i=0; i < bin_cells.size(); i++){
-		
-		cv::Mat b = bin_cells[i];
-		cv::Mat m = mag_cells[i];
-	}
-
-	return hist;
+	return LaplacianPyramid[0];
 }
 
 #endif

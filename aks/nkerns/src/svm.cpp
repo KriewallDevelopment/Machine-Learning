@@ -18,6 +18,7 @@ using std::endl;
 
 extern KERNEL_FUNCTION aks_kernel;
 extern double* dots;
+extern struct svm_parameter param;
 
 
 int libsvm_version = LIBSVM_VERSION;
@@ -247,6 +248,10 @@ private:
 
 	double kernel_aks(int i, int j) const
 	{
+		param.degree = degree;
+		param.gamma = gamma;
+		param.coef0 = coef0;
+
 		return aks_kernel(x[i],x[j]);
 	}
 	double kernel_linear(int i, int j) const
@@ -337,18 +342,21 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
 }
 
 double Kernel::k_function(const svm_node *x, const svm_node *y,
-			  const svm_parameter& param)
+			  const svm_parameter& p)
 {
+	param.degree = p.degree;
+	param.coef0 = p.coef0;
+	param.gamma = p.gamma;
 
 	return aks_kernel(x,y);
 
 
-	switch(param.kernel_type)
+	switch(p.kernel_type)
 	{
 		case LINEAR:
 			return dot(x,y);
 		case POLY:
-			return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
+			return powi(p.gamma*dot(x,y)+p.coef0,p.degree);
 		case RBF:
 		{
 			double sum = 0;
@@ -388,10 +396,10 @@ double Kernel::k_function(const svm_node *x, const svm_node *y,
 				++y;
 			}
 			
-			return exp(-param.gamma*sum);
+			return exp(-p.gamma*sum);
 		}
 		case SIGMOID:
-			return tanh(param.gamma*dot(x,y)+param.coef0);
+			return tanh(p.gamma*dot(x,y)+p.coef0);
 		case PRECOMPUTED:  //x: test (validation), y: SV
 			return x[(int)(y->value)].value;
 		default:

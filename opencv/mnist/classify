@@ -1,28 +1,54 @@
 #!/usr/bin/env bash
 
-cp output5 ../../libsvm/output
-cp input5 ../../libsvm/input
+cd ..
 
-cd ../../libsvm/
+# Add bin to path
+
+export PATH=$PWD/bin:$PATH
+
+
+# Build SVM if needed
+
+echo "Building SVM..."
+
+cd svm
+make &> /dev/null
+
+cp svm-scale   ../bin
+cp svm-train   ../bin
+cp svm-predict ../bin
+
+cd ..
+
+
+# Copy vectors for classification
+
+cp mnist/vecs/train datasets/train
+cp mnist/vecs/test datasets/test
+
+
+# Scaling
 
 echo "Scaling data..."
 
-./svm-scale output > output.scale
-./svm-scale input > input.scale 
+cd datasets
 
-cp output.scale ../aks/nkerns/testnums
-cp input.scale ../aks/predict/input 
+svm-scale train > train.scale
+svm-scale test > test.scale
 
-cd ../aks/nkerns
-head -6000 testnums > input
+
+# Training
 
 echo "Training Models..."
 
-./main input -c 100
+svm-train -c 100 -t 1 -d 5 -m 1000 train.scale
 
-cp input.model ../predict/
-cd ../predict/
+
+# Testing 
 
 echo "Testing accuracy..."
 
-./main input input.model /dev/null
+svm-predict test.scale train.scale.model /dev/null
+
+
+echo "Done."
