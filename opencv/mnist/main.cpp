@@ -10,11 +10,14 @@
 using namespace cv;
 using namespace std;
 
-//const char* IMAGE_FILE = "train/images";
-//const char* LABEL_FILE = "train/labels";
+const char* IMAGE_FILE;
+const char* LABEL_FILE;
 
-const char* IMAGE_FILE = "test/images";
-const char* LABEL_FILE = "test/labels";
+const char* TRAIN_IMAGE_FILE = "train/images";
+const char* TRAIN_LABEL_FILE = "train/labels";
+
+const char* TEST_IMAGE_FILE = "test/images";
+const char* TEST_LABEL_FILE = "test/labels";
 
 typedef struct {
 
@@ -117,71 +120,78 @@ vector<int> getLabels(){
 	return labels;
 }
 
+int featurePrint(Mat img, vector<double> adtl, int l){
+
+	int idx = 1;
+
+	cout << l << " ";
+
+	for(int i=0; i<28; i++){
+		for(int j=0; j<28; j++){
+			cout << idx++ << ":" << 
+				(int) img.at<uchar>(i,j)  << " ";
+		}
+	}
+
+	for(int i=0; i<adtl.size(); i++)
+		cout << idx++ << ":" << adtl[i] << " ";
+
+	cout << endl;
+
+	return idx;
+}
+
 int main(int argc, char* argv[]){
 
-	vector<FEATURE> images = getImages();
-	vector<int> labels = getLabels();
-	int many = images.size();
+	int many = -1;
 
 	if(argc > 1){
 		many = atoi(argv[1]);
+		IMAGE_FILE = TRAIN_IMAGE_FILE;
+		LABEL_FILE = TRAIN_LABEL_FILE;
 	}
+	else{
+		IMAGE_FILE = TEST_IMAGE_FILE;
+		LABEL_FILE = TEST_LABEL_FILE;
+	}
+
+	vector<FEATURE> images = getImages();
+	vector<int> labels = getLabels();
 	
+	if(many == -1)
+		many = images.size();
+
 
 	for(int itr = 0; itr < many; itr++){
 	
 		Mat temp = images[itr].img;
+
+		debug(temp);
+		continue;
+		//Mat blurred;
+
 		temp = deskew(temp);
-		//imwrite("imgout.jpg", temp);
-		//waitKey(0);
-		//temp = hog(temp);
-		//int corners = cornerHarris_demo(temp);
-		//break;
-		//continue;
-	
-		int bins[14][14];
-	
-		for(int i=0; i<14; i++)
-			for(int j=0; j<14; j++)
-				bins[i][j] = 0;
+		//blur(temp, blurred, Size(1,1), Point(-1,-1));
 
-		for(int i=0; i < 28; i++){
-			for(int j=0; j < 28; j++){
+		//for(int i=0; i < 28; i++)
+		//	for(int j=0; j < 28; j++)
+		//		if(blurred.at<uchar>(i,j) != 255)
+		//			blurred.at<uchar>(i,j) = 0;
 
-				int val = (int)temp.at<uchar>(Point(i,j));
-				int row = (i - (i % 2)) / 2;
-				int col = (j - (j % 2)) / 2;
-				bins[row][col] += val;
-			}
-		}
+		//temp = blurred;
 
-		cout << labels[itr] << " ";
-		//cout << "1:" << corners << " ";
-		//cout << "2:" << pp.p2.y - pp.p1.y << " ";
+		vector<double> adtl = on_pixels(temp);
+		vector<float> adtl2 = hog(temp);
+		//vector<double> badtl = on_pixels(blurred);
 
-		for(int i=0; i<14; i++){
-			for(int j=0; j<14; j++){
-				bins[i][j] /= 4;
-				cout << (i*14) + j + 1 << ":" << bins[i][j] << " ";
-				//cout << (i*28) + j + 1 << ":" << 
-				//	(int) temp.at<uchar>(i,j)  << " ";
-			}
-		}
+		for(int i=0; i < adtl2.size(); i++)
+			adtl.push_back((double)adtl2[i]);
 
-		cout << endl;
+		featurePrint(temp, adtl, labels[itr]);
+
+		//if(IMAGE_FILE == TRAIN_IMAGE_FILE)
+		//	featurePrint(blurred, badtl, labels[itr]);
 	}
-
-	//cvNamedWindow("TEST", CV_WINDOW_AUTOSIZE);
-	//imshow("TEST", images[0]);
-
-	//while(true){
-
-    //    char c = cvWaitKey(33);
-    //    if(c == 27)
-    //        break;
-    //}
-
-	//cvDestroyWindow("TEST");
 
 	return 0;
 }

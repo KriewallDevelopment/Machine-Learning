@@ -1,0 +1,40 @@
+------------------------------------------------------
+DEGREE:			5
+FEATURE DESC:	pixel averages (14x14)
+FEATURE SIZE:	196
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		91.96%
+------------------------------------------------------
+------------------------------------------------------
+DEGREE:			5
+FEATURE DESC:	pixel averages (14x14) + deskewing
+FEATURE SIZE:	196
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		93.15%
+------------------------------------------------------
+------------------------------------------------------
+DEGREE:			5
+FEATURE DESC:	all pixels + deskewing
+FEATURE SIZE:	784
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		93.5%
+------------------------------------------------------
+------------------------------------------------------
+DEGREE:			5
+FEATURE DESC:	all pixels + deskewing + bound_box data
+FEATURE SIZE:	796
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		93.53%
+------------------------------------------------------
+------------------------------------------------------
+DEGREE:			5
+FEATURE DESC:	all pixels + deskewing + bound_box data
+FEATURE SIZE:	796
+TRAIN SIZE:		60000
+TEST SIZE:		10000
+ACCURACY:		98.47%
+------------------------------------------------------

@@ -41,7 +41,7 @@ svm-scale test > test.scale
 
 echo "Training Models..."
 
-svm-train -c 100 -t 1 -d 5 -m 1000 train.scale
+svm-train -c 100 -t 2 -m 1000 train.scale
 
 
 # Testing 

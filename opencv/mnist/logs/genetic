@@ -1,0 +1,8 @@
+-------------------------------------------------
+TYPE:			Automatic Kernel Selection
+FEATURES:		Pixel Averages (14 x 14)
+BEST STATE:		0 7.03125 1.375 0.0625 0.09375 0
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		93.34%
+-------------------------------------------------

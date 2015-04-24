@@ -1,0 +1,21 @@
+------------------------------------------------------
+FEATURE DESC:	pixel averages (14x14)
+FEATURE SIZE:	196
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		86.78%
+------------------------------------------------------
+------------------------------------------------------
+FEATURE DESC:	pixel averages (14x14) + deskewing
+FEATURE SIZE:	196
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		89.72%
+------------------------------------------------------
+------------------------------------------------------
+FEATURE DESC:	all pixels + deskewing
+FEATURE SIZE:	784
+TRAIN SIZE:		1000
+TEST SIZE:		10000
+ACCURACY:		90.08%
+------------------------------------------------------

@@ -104,11 +104,11 @@ void perform_aks(){
 	State s5(test);
 
 	test.alphas[0] = 0.0;
-	test.alphas[1] = 0.0;
-	test.alphas[2] = 0.0;
-	test.alphas[3] = 0.0;
-	test.alphas[4] = 0.0;
-	test.alphas[5] = 1.0;
+	test.alphas[1] = 0.5;
+	test.alphas[2] = 0.5;
+	test.alphas[3] = 0.5;
+	test.alphas[4] = 0.5;
+	test.alphas[5] = 0.0;
 	State s6(test);
 
 	test.alphas[0] = 0.0;

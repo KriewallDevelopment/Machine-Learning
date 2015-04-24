@@ -148,6 +148,8 @@ void predict(FILE *input, FILE *output)
 		}
 		else if(predict_label > 0.0)
 			pones++;
+
+		printf("Actual Value: %f Predicted Value: %f\n", target_label,predict_label);
 		
 
 		if(predict_label == target_label)

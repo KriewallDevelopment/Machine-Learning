@@ -35,6 +35,14 @@ typedef struct _interval {
 } Interval;
 
 
+static void debug(cv::Mat m){
+
+	cv::namedWindow("debug", CV_WINDOW_AUTOSIZE );
+	cv::imshow("debug", m );
+	cv::waitKey(0);
+}
+
+
 static inline void draw_line(cv::Mat img, PointPair p){
 
 	int thick = 1;
@@ -52,234 +60,69 @@ static inline void draw_rect(cv::Mat img, PointPair p){
 	cv::rectangle(img, p.p1, p.p2, cv::Scalar(0, 255, 0), thick, type);
 }
 
-static vector<Interval> getBlackIntervals(cv::Mat img, int col){
+void findX(cv::Mat img, int* min, int* max){
 
-	vector<Interval> ret;
-	bool curr = false;
+    int minFound=0;
 
-	int HEIGHT = img.size().height;
+    cv::Mat data;
+    cv::Scalar maxVal(28 * 255);
+    cv::Scalar val(0);
 
-	Interval itv;
-	itv.y1 = itv.y2 = 0;
+    for(int i=0; i < 28; i++){
 
-	for(int i=0; i < HEIGHT; i++){
+        data = img.col(i);
+        val = cv::sum(data);
 
-		int color = ((int)img.at<uchar>(i,col));
+        if(val.val[0] < maxVal.val[0]){
 
-		if((IS_WHITE(color) && curr) || (i == (HEIGHT-1) && curr)){
-			curr = false;
-			itv.y2 = SMALLER(i + 1, HEIGHT);
-			ret.push_back(itv);
-			itv.y1 = itv.y2 = 0;
-		}
-		else if(IS_BLACK(color) && curr){
-			itv.y2 = i + 1;
-		}
-		else if(IS_BLACK(color)){
+            *max= i;
 
-			itv.y1 = BIGGER(i-1,0);
-			itv.y2 = i + 1;
-			curr = true;
-		}
-	}
-
-	return ret;
-}
-
-static vector<Interval> getWhiteIntervals(cv::Mat img, int col){
-
-	vector<Interval> ret;
-	bool curr = false;
-
-	int HEIGHT = img.size().height;
-
-	Interval itv;
-	itv.y1 = itv.y2 = 0;
-
-	for(int i=0; i < HEIGHT; i++){
-
-		int color = ((int)img.at<uchar>(i,col));
-
-		if((IS_BLACK(color) && curr) || (i == (HEIGHT-1) && curr)){
-			curr = false;
-			itv.y2 = SMALLER(i + 1, HEIGHT);
-			ret.push_back(itv);
-			itv.y1 = itv.y2 = 0;
-		}
-		else if(IS_WHITE(color) && curr){
-			itv.y2 = i + 1;
-		}
-		else if(IS_WHITE(color)){
-
-			itv.y1 = BIGGER(i-1,0);
-			itv.y2 = i + 1;
-			curr = true;
-		}
-	}
-
-	return ret;
-}
-
-PointPair getSingleImageRectangle(cv::Mat img){
-
-	PointPair p;
-
-	/* Left */
-
-	int idx = 0;
-
-	while(true){
-
-		if(getBlackIntervals(img,idx).size() == 0)
-			idx++;
-		else
-			break;
-	}
-
-	p.p1.x = BIGGER(idx - 1, 0);
-
-	/* Right */
-
-	idx = 27;
-
-	while(true){
-
-		if(getBlackIntervals(img,idx).size() == 0)
-			idx--;
-		else
-			break;
-	}
-
-	p.p2.x = SMALLER(idx + 1, 27);
-
-	return p;
-}
-
-
-void combineIntervals(vector<Interval>* v1, vector<Interval>* v2){
-
-	for(int i=0; i < v2->size(); i++)
-		v1->push_back(v2->at(i));
-
-	/* eh... n^2... */
-
-	for(int i=0; i < v1->size(); i++){
-
-		Interval itv1 = v1->at(i);
-
-		for(int j = i+1; j < v1->size(); j++){
-
-			Interval itv2 = v1->at(j);
-
-			/* Lower overlap? */
-
-			if(itv1.y2 >= itv2.y1 && itv1.y1 <= itv2.y1){
-				itv1.y2 = BIGGER(itv1.y2, itv2.y2);
-				itv1.y1 = SMALLER(itv1.y1, itv2.y1);
-				itv1.x1 = SMALLER(itv1.x1, itv2.x1);
-				v1->at(i) = itv1;
-				v1->erase(v1->begin() + j);
-				i=0;
-				break;
-			}
-
-			/* Upper overlap? */
-
-			if(itv2.y2 >= itv1.y1 && itv2.y1 <= itv1.y1){
-				itv2.y2 = BIGGER(itv1.y2, itv2.y2);
-				itv2.y1 = SMALLER(itv1.y1, itv2.y1);
-				itv2.x1 = SMALLER(itv1.x1, itv2.x1);
-				v1->at(j) = itv2;
-				v1->erase(v1->begin() + i);
-				i=0;
-				break;
-			}
-		}
-	}
-}
-
-static void purgeDuplicates(vector<PointPair>* rects){
-
-	for(int i=0; i < rects->size(); i++){
-
-		for(int j=i+1; j < rects->size(); j++){
-		
-			PointPair one = rects->at(i);
-			PointPair two = rects->at(j);
-
-			/* Does two contain one? */
-
-			if( one.p1.x > two.p1.x &&
-				one.p1.x < two.p2.x &&
-				one.p2.y < two.p2.y &&
-				one.p2.y > two.p1.y)
-			{
-				rects->erase(rects->begin() + i);
-				i = -1;
-				break;
-			}
-			
-			/* Does one contain two? */
-
-			if( two.p1.x > one.p1.x &&
-				two.p1.x < one.p2.x &&
-				two.p2.y < one.p2.y &&
-				two.p2.y > one.p1.y)
-			{
-				rects->erase(rects->begin() + j);
-				i = -1;
-				break;
-			}
-		}
-	}
-}
-
-vector<PointPair> getRectangles(cv::Mat img){
-
-	vector<PointPair>   rects;
-    vector<Interval>    ints;
-
-	int WIDTH = img.size().width;
-    int state = 0;
-
-    for(int i=0; i < WIDTH; i++){
-
-        vector<Interval> bints = getBlackIntervals(img,i);
-        vector<Interval> wints = getWhiteIntervals(img,i);
-
-        /* Mark current X value */
-
-        for(int j=0; j < bints.size(); j++)
-            bints[j].x1 = BIGGER(i-1,0);
-
-        combineIntervals(&ints, &bints);
-
-        /* Have any intervals terminated? */
-
-        for(int j=0; j < wints.size(); j++){
-
-            Interval witv = wints[j];
-
-            for(int k=0; k < ints.size(); k++){
-
-                Interval bitv = ints[k];
-				
-				if(witv.y1 <= bitv.y1 && witv.y2 >= bitv.y2){
-                    bitv.x2 = SMALLER(i+1, WIDTH);
-                    PointPair pp;
-                    pp.p1 = cv::Point(bitv.x1,bitv.y1);
-                    pp.p2 = cv::Point(bitv.x2,bitv.y2);
-                    rects.push_back(pp);
-                    ints.erase(ints.begin() + k);
-                    k = -1;
-                }
+            if(!minFound){
+                *min= i;
+                minFound= 1;
             }
         }
     }
+}
 
-    purgeDuplicates(&rects);
 
-	return rects;
+void findY(cv::Mat img, int* min, int* max){
+
+    int i;
+    int minFound=0;
+    cv::Mat data;
+    cv::Scalar maxVal(28 * 255);
+    cv::Scalar val(0);
+
+    for (i=0; i < 28; i++){
+
+        data = img.row(i);
+        val = cv::sum(data);
+
+        if(val.val[0] < maxVal.val[0]){
+
+            *max=i;
+
+            if(!minFound){
+                *min= i;
+                minFound= 1;
+            }
+        }
+    }
+}
+
+cv::Rect findBB(cv::Mat img){
+
+    cv::Rect aux;
+    int xmin, xmax, ymin, ymax;
+    xmin=xmax=ymin=ymax=0;
+
+    findX(img, &xmin, &xmax);
+    findY(img, &ymin, &ymax);
+
+    aux = cv::Rect(xmin, ymin, xmax-xmin, ymax-ymin);
+
+    return aux;
 }
 
 cv::Mat cropImage(cv::Mat img, PointPair p){
@@ -301,6 +144,8 @@ cv::Mat centerImage(cv::Mat img){
 					cv::Size(img.size().width, img.size().height));
 
 	img.copyTo(output(roi));
+
+	//debug(output)
 
 	return output;
 }
@@ -335,15 +180,53 @@ int cornerHarris_demo(cv::Mat img){
 	}
 
 	//Showing the result
-	cv::namedWindow( "corners_window", CV_WINDOW_AUTOSIZE );
-	cv::imshow( "corners_window", dst_norm_scaled );
-	cv::waitKey(0);
+	debug(dst_norm_scaled);
 
 	return count;
 }
 
 
 cv::Mat deskew(cv::Mat img){
+
+/*
+	cv::Mat M, rotated;
+
+	std::vector<cv::Point> points;
+
+	for(int i=0; i < img.size().width; i++)
+		for(int j=0; j < img.size().height; j++)
+			if(!IS_WHITE(img.at<uchar>(i,j)))
+				points.push_back(cv::Point(i,j));
+
+	cv::RotatedRect box = cv::minAreaRect(points);
+
+	float angle = box.angle;
+	cv::Size rs = box.size;
+
+	if(box.angle < -45.0){
+
+		angle += 90.0;
+		double tmp = rs.width;
+		rs.width = rs.height;
+		rs.height = tmp;	
+	}
+
+	M = cv::getRotationMatrix2D(box.center, angle, 1.0);
+	cv::warpAffine(img, rotated, M, img.size(), cv::INTER_CUBIC);
+
+	debug(rotated);
+
+	//cv::Scalar color(0,0,0);
+	//cv::Point2f rect_points[4];
+	//box.points( rect_points );
+    //for( int j = 0; j < 4; j++ )
+	//	line( img, rect_points[j], rect_points[(j+1)%4], color, 1, 8 );
+
+	//debug(img);
+
+	*/
+
+	/***********************/
 
 	int SZ = 28;
 	cv::Mat output(SZ, SZ, CV_8UC1, cv::Scalar(255));
@@ -369,10 +252,82 @@ cv::Mat deskew(cv::Mat img){
 						cv::BORDER_CONSTANT,
 						cv::Scalar(255,255,255));
 
+	//debug(output);
+
 	return output;
 }
 
-cv::Mat hog(cv::Mat image){
+std::vector<float> hog(cv::Mat image){
+
+	cv::Mat img(cv::Size(28,28), CV_8UC3);
+
+	cv::cvtColor(image, img, cv::COLOR_GRAY2RGB);
+
+//	for(int i=0; i < 28; i++)
+//		for(int j=0; j < 28; j++)
+//			img
+
+	cv::Mat hsv;
+	cv::Mat hsvHalf;
+
+	//cout << img.channels() << endl;
+
+	cv::cvtColor(img, hsv, cv::COLOR_RGB2HSV);
+
+	hsvHalf = hsv(cv::Range(hsv.rows / 2, hsv.rows - 1),
+					cv::Range( 0, hsv.cols - 1));
+
+	int hbins = 12;
+	int sbins = 12;
+	int histSize[] = { hbins, sbins };
+
+	float hranges[] = { 0, 180 };
+	float sranges[] = { 0, 256 };
+
+	const float* ranges[] = { hranges, sranges };
+	
+	int channels[] = { 0, 1 };
+
+	cv::MatND histbase;
+
+	cv::calcHist(&hsv, 1, channels, cv::Mat(),
+					histbase, 2, histSize, ranges,
+					true, false);
+
+	cv::normalize(histbase, histbase, 0, 1, 
+					cv::NORM_MINMAX, -1, cv::Mat());
+
+	std::vector<float> out;
+
+	for(int i=0; i < 256; i++){
+		float f = histbase.at<float>(i);
+		if(f != f)
+			out.push_back(0.0);
+		else
+			out.push_back(histbase.at<float>(i));
+	}
+
+	return out;
+
+	/*
+	vector<float>		ders;
+	vector<cv::Point>	locs;
+
+	cv::Size sz( 28, 28);
+	cv::Size pd( 0, 0);
+
+	cv::HOGDescriptor hog;
+	hog.winSize = cv::Size(64,128);
+
+	hog.compute(image, ders, sz, pd, locs);
+
+	cout << ders.size() << endl;
+
+	return ders;
+	*/
+}
+
+cv::Mat laplace(cv::Mat image){
 
 	int level =1;
 
@@ -398,12 +353,69 @@ cv::Mat hog(cv::Mat image){
 
 	//show whatever you want.
 
-	//cv::namedWindow( "corners_window", CV_WINDOW_AUTOSIZE );
-    //cv::imshow( "corners_window", /*LaplacianPyramid[0]*/ image );
-
-	//cv::waitKey(0);
-
 	return LaplacianPyramid[0];
+}
+
+static int edges(cv::Mat img){
+
+	//cv::Canny(img, output, 100, 300, 3);
+
+	int LEN = 6; // line length in pixels
+	
+
+	int count = 0;
+
+	return count;
+}
+
+static std::vector<double> on_pixels(cv::Mat img){
+
+    std::vector<double> out;
+
+    int set = 0;
+    cv::Rect bb = findBB(img);
+
+    double bmx = bb.x + (bb.width / 2);
+    double bmy = bb.y + (bb.height / 2);
+
+	out.push_back(bmx);
+    out.push_back(bmy);
+    out.push_back(bb.width);
+    out.push_back(bb.height);
+
+    double mux = 0.0;
+    double muy = 0.0;
+
+    for(int i=0; i < img.size().width; i++){
+        for(int j=0; j < img.size().height; j++){
+
+            if(!IS_WHITE(img.at<uchar>(i,j))){
+                mux += i;
+                muy += j;
+                set++;
+            }
+        }
+    }
+
+	mux /= (1.0 * set);
+    muy /= (1.0 * set);
+
+    mux -= bmx;
+    muy -= bmy;
+
+    mux /= (1.0 * bb.width);
+    muy /= (1.0 * bb.height);
+
+    out.push_back((double)set);
+    out.push_back(mux);
+    out.push_back(muy);
+    out.push_back(pow(mux,2.0));
+    out.push_back(pow(muy,2.0));
+    out.push_back(mux * muy);
+    out.push_back(muy * pow(mux,2.0));
+    out.push_back(mux * pow(muy,2.0));
+
+    return out;
 }
 
 #endif
